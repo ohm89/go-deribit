@@ -203,12 +203,12 @@ func (c *DeribitClient) PingRegular(ctx context.Context, duration time.Duration)
 	}()
 }
 
-func (c *DeribitClient) SetHeartBeat() error {
+func (c *DeribitClient) SetHeartBeat(interval int) error {
 	msg := map[string]interface{}{
 		"jsonrpc": "2.0",
 		"method":  "public/set_heartbeat",
 		"params": map[string]interface{}{
-			"interval": 20,
+			"interval": interval, // ## In second
 		},
 	}
 

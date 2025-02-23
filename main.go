@@ -43,7 +43,7 @@ func main() {
 		log.Fatalf("failed to hello: %v", err)
 	}
 
-	err2 := client.SetHeartBeat()
+	err2 := client.SetHeartBeat(60)
 	if err2 != nil {
 		log.Fatalf("failed to set heart beat: %v", err)
 	}
