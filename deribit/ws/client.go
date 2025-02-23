@@ -13,6 +13,7 @@ import (
 )
 
 type DeribitClient struct {
+	websocketUrl string
 	conn         *websocket.Conn
 	channels     []string
 	mu           sync.Mutex
@@ -42,7 +43,7 @@ func NewDeribitClient(clientID, clientSecret string) *DeribitClient {
 func (c *DeribitClient) Connect(websocketUrl string) error {
 
 	// ## DEBUG
-	fmt.Printf("Web Socket URL: %s \n", websocketUrl)
+	fmt.Printf("Web Socket URL: %s \n\n", websocketUrl)
 
 	// WebSocket connection URL
 	u := url.URL{Scheme: "wss", Host: websocketUrl, Path: "/ws/api/v2"}
@@ -54,13 +55,7 @@ func (c *DeribitClient) Connect(websocketUrl string) error {
 	}
 
 	c.conn = conn
-
-	// Authenticate the WebSocket connection
-	err = c.authenticate()
-	if err != nil {
-		c.conn.Close()
-		return fmt.Errorf("failed to authenticate: %w", err)
-	}
+	c.websocketUrl = websocketUrl
 
 	return nil
 }
@@ -69,69 +64,7 @@ func (c *DeribitClient) GetConn() *websocket.Conn {
 	return c.conn
 }
 
-func (c *DeribitClient) authenticate() error {
-	msg := map[string]interface{}{
-		"jsonrpc": "2.0",
-		"method":  "public/auth",
-		"params": map[string]string{
-			"grant_type":    "client_credentials",
-			"client_id":     c.clientID,
-			"client_secret": c.clientSecret,
-		},
-	}
-
-	jsonMsg, err := json.Marshal(msg)
-	if err != nil {
-		return fmt.Errorf("failed to marshal authentication message: %w", err)
-	}
-
-	err = c.conn.WriteMessage(websocket.TextMessage, jsonMsg)
-	if err != nil {
-		return fmt.Errorf("failed to send authentication message: %w", err)
-	}
-
-	_, message, err := c.conn.ReadMessage()
-	if err != nil {
-		return fmt.Errorf("failed to read authentication response: %w", err)
-	}
-
-	log.Printf("Received authentication response: %s", message)
-	fmt.Printf("Received authentication response: %s", message)
-
-	// Parse the authentication response and save the access_token
-	var authResponse map[string]interface{}
-	err = json.Unmarshal(message, &authResponse)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal authentication response: %w", err)
-	}
-
-	result, ok := authResponse["result"].(map[string]interface{})
-	if !ok {
-		return fmt.Errorf("invalid authentication response format")
-	}
-
-	accessToken, ok := result["access_token"].(string)
-	if !ok {
-		return fmt.Errorf("failed to extract access_token from authentication response")
-	}
-
-	c.accessToken = accessToken
-
-	refreshToken, ok := result["refresh_token"].(string)
-	if !ok {
-		return fmt.Errorf("failed to extract refresh_token from authentication response")
-	}
-
-	c.refreshToken = refreshToken
-
-	// ## [DEBUG]
-	// fmt.Printf("\n\n Access Token: %s \n\n", c.accessToken)
-	// fmt.Printf("\n\n Refresh Token: %s \n\n", c.refreshToken)
-
-	return nil
-}
-
-func (c *DeribitClient) Subscribe(channels ...string) {
+func (c *DeribitClient) Subscribe(channels ...string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -148,23 +81,17 @@ func (c *DeribitClient) Subscribe(channels ...string) {
 
 	jsonMsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Fatalf("failed to marshal subscription message: %v", err)
+		// log.Fatalf("failed to marshal subscription message: %v", err)
+		return err
 	}
 
 	err = c.conn.WriteMessage(websocket.TextMessage, jsonMsg)
 	if err != nil {
-		log.Fatalf("failed to send subscription message: %v", err)
+		// log.Fatalf("failed to send subscription message: %v", err)
+		return err
 	}
-}
 
-func (c *DeribitClient) ReceiveRaw() ([]byte, error) {
-	_, message, err := c.conn.ReadMessage()
-	if err != nil {
-		log.Fatalf("failed to read message: %v", err)
-	}
-	fmt.Printf("Received from server: %s\n", message)
-
-	return message, err
+	return nil
 }
 
 func (c *DeribitClient) Ping() error {
@@ -227,33 +154,11 @@ func (c *DeribitClient) SetHeartBeat(interval int) error {
 
 func (c *DeribitClient) handleHeartbeat() error {
 	log.Println("Received heartbeat message")
-	fmt.Println("Received heartbeat message")
 
 	// Prepare the heartbeat response
 	err := c.Ping()
 
 	return err
-}
-
-func (c *DeribitClient) HandleMessage(message []byte) error {
-	var msg map[string]interface{}
-	err := json.Unmarshal(message, &msg)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal message: %w", err)
-	}
-
-	method, _ := msg["method"].(string)
-	// if !ok {
-	// 	return fmt.Errorf("message does not have a 'method' field")
-	// }
-
-	switch method {
-	case "heartbeat":
-		return c.handleHeartbeat()
-	default:
-		fmt.Printf("Received message: %s\n", message)
-		return nil
-	}
 }
 
 // ## Hello to set program for deribit to known software
@@ -281,12 +186,73 @@ func (c *DeribitClient) Hello(softwareClientName string, softwareClientVersion s
 }
 
 // ## Main Run For Testing client
+func (c *DeribitClient) Close() {
+	c.conn.Close()
+}
+
+func (c *DeribitClient) handleTextMessage(message []byte) {
+	var msg map[string]interface{}
+	err := json.Unmarshal(message, &msg)
+	if err != nil {
+		log.Printf("failed to unmarshal message: %v", err)
+		return
+	}
+
+	method, _ := msg["method"].(string)
+	switch method {
+	case "heartbeat":
+		c.handleHeartbeat()
+	default:
+		fmt.Printf("Received message: %s\n", message)
+	}
+}
+
+// ## Reconnect
+func (c *DeribitClient) reconnect() error {
+	// Close the existing connection
+	c.conn.Close()
+
+	// Reconnect to the WebSocket
+	err := c.Connect(c.websocketUrl)
+	if err != nil {
+		return err
+	}
+
+	// Resubscribe to the channels
+	err = c.Subscribe(c.channels...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ## Main Run Client in loop
 func (c *DeribitClient) Run() {
 	for {
-		_, message, err := c.conn.ReadMessage()
+		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
-			log.Fatalf("failed to read message: %v", err)
+			// Check if the error is a WebSocket error
+			if _, ok := err.(*websocket.CloseError); ok {
+				// Reconnect the WebSocket
+				err = c.reconnect()
+				if err != nil {
+					log.Printf("failed to reconnect: %v", err)
+					return
+				}
+				continue
+			}
+			log.Printf("failed to read message: %v", err)
+			continue
 		}
-		fmt.Printf("Received from server: %s\n", message)
+
+		switch messageType {
+		case websocket.TextMessage:
+			c.handleTextMessage(message)
+		case websocket.BinaryMessage:
+			fmt.Printf("Received binary message from server: %v\n", message)
+		default:
+			log.Printf("unexpected message type: %d", messageType)
+		}
 	}
 }

@@ -1,3 +1,7 @@
+# 0.0.3
+
+- [CHANGE] client.go to be go routine to used
+
 # 0.0.2
 
 - [CHANGE] add integer for SetHeartBeat function in ws/client
