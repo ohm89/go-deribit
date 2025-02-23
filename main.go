@@ -99,10 +99,86 @@ func main() {
 		log.Fatalf("failed to authenticate: %v", err4)
 	}
 
+	// ## -------------- Test Create Buy Order ---------------------
+	// // ## Create a new buy order request
+	// orderRequest := &ws.OrderRequest{
+	// 	InstrumentName: "BTC_USDC",
+	// 	Amount:         0.0001,
+	// 	Price:          18000,
+	// 	Type:           "limit",
+	// 	Label:          "limit0000243",
+	// }
+
+	// errPrivate = ws.CreateBuyOrder(privateClient, orderRequest)
+	// if errPrivate != nil {
+	// 	privateClient.Close()
+	// 	log.Fatalf("failed to create buy order: %v", errPrivate)
+	// }
+
+	// orderRequest2 := &ws.OrderRequest{
+	// 	InstrumentName: "BTC_USDC",
+	// 	Amount:         0.0001,
+	// 	Price:          18000,
+	// 	Type:           "limit",
+	// 	Label:          "limit0000244",
+	// }
+
+	// errPrivate = ws.CreateBuyOrder(privateClient, orderRequest2)
+	// if errPrivate != nil {
+	// 	privateClient.Close()
+	// 	log.Fatalf("failed to create buy order: %v", errPrivate)
+	// }
+
+	// ## -------------- Test Create Sell Order ---------------------
+	// // ## Create a new buy order request
+	// orderRequest := &ws.OrderRequest{
+	// 	InstrumentName: "BTC_USDC",
+	// 	Amount:         0.0001,
+	// 	Price:          380000,
+	// 	Type:           "limit",
+	// 	Label:          "limitSell0000243",
+	// }
+
+	// errPrivate = ws.CreateSellOrder(privateClient, orderRequest)
+	// if errPrivate != nil {
+	// 	privateClient.Close()
+	// 	log.Fatalf("failed to create buy order: %v", errPrivate)
+	// }
+
+	// orderRequest2 := &ws.OrderRequest{
+	// 	InstrumentName: "BTC_USDC",
+	// 	Amount:         0.0001,
+	// 	Price:          380000,
+	// 	Type:           "limit",
+	// 	Label:          "limitSell0000244",
+	// }
+
+	// errPrivate = ws.CreateSellOrder(privateClient, orderRequest2)
+	// if errPrivate != nil {
+	// 	privateClient.Close()
+	// 	log.Fatalf("failed to create buy order: %v", errPrivate)
+	// }
+
+	// ## -------------- Test Cancel Order ---------------------
+
+	// errPrivate = ws.CancelOneOrder(privateClient, "BTC_USDC-2725918698")
+	// if errPrivate != nil {
+	// 	privateClient.Close()
+	// 	log.Fatalf("failed to create buy order: %v", errPrivate)
+	// }
+
+	// ## -------------- Test Cancel All ---------------------
+
+	// errPrivate = ws.CancelAllOrders(privateClient)
+	// if errPrivate != nil {
+	// 	privateClient.Close()
+	// 	log.Fatalf("failed to create buy order: %v", errPrivate)
+	// }
+
 	// ## -------------- Main Loop (Concurrent GO) ---------------------
 	// Start concurrent tasks for HandleReadMessage and HandleHeartBeatMessage
 	// Start concurrent tasks for HandleReadMessage and HandleHeartBeatMessage
-	go client.Run()
+	// go client.Run()
 	go privateClient.Run()
 
 	// ## -------------- Termination ---------------------

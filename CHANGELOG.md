@@ -1,3 +1,10 @@
+# 0.0.4
+
+- [NEW] cancelAll api
+- [NEW] cancelOne api
+- [NEW] createBuy api
+- [NEW] createSell api
+
 # 0.0.3
 
 - [CHANGE] client.go to be go routine to used

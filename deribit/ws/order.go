@@ -9,41 +9,41 @@ import (
 )
 
 type OTOCOConfig struct {
-	Amount         float64 `json:"amount"`
+	Amount         float64 `json:"amount,omitempty"`
 	Direction      string  `json:"direction"`
-	Type           string  `json:"type"`
-	Label          string  `json:"label"`
-	Price          float64 `json:"price"`
-	ReduceOnly     bool    `json:reduce_only`
-	TimeInForce    string  `json:time_in_force`
-	PostOnly       bool    `json:post_only`
-	RejectPostOnly bool    `json:reject_post_only`
-	TriggerPrice   float64 `json:trigger_price`
-	TriggerOffset  float64 `json:trigger_offset`
-	Trigger        string  `json:trigger`
+	Type           string  `json:"type,omitempty"`
+	Label          string  `json:"label,omitempty"`
+	Price          float64 `json:"price,omitempty"`
+	ReduceOnly     bool    `json:"reduce_only,omitempty"`
+	TimeInForce    string  `json:"time_in_force,omitempty"`
+	PostOnly       bool    `json:"post_only,omitempty"`
+	RejectPostOnly bool    `json:"reject_post_only,omitempty"`
+	TriggerPrice   float64 `json:"trigger_price,omitempty"`
+	TriggerOffset  float64 `json:"trigger_offset,omitempty"`
+	Trigger        string  `json:"trigger,omitempty"`
 }
 
 type OrderRequest struct {
-	InstrumentName       string        `json:instrument_name`
-	Amount               float64       `json:"amount"`
-	Contracts            float64       `json:contracts`
-	Type                 string        `json:type`
-	Label                string        `json:label`
-	Price                float64       `json:price`
-	TimeInForce          string        `json:time_in_force`
-	MaxShow              float64       `json:max_show`
-	PostOnly             bool          `json:post_only`
-	RejectPostOnly       bool          `json:reject_post_only`
-	ReduceOnly           bool          `json:reduce_only`
-	TriggerPrice         float64       `json:trigger_price`
-	TriggerOffset        float64       `json:trigger_offset`
-	Trigger              string        `json:trigger`
-	Advanced             string        `json:advanced`
-	Mmp                  bool          `json:mmp`
-	ValidUntil           bool          `json:valid_until`
-	LinkedOrderType      string        `json:linked_order_type`
-	TriggerFillCondition string        `json:trigger_fill_condition`
-	OtocoConfig          []OTOCOConfig `json:otoco_config`
+	InstrumentName       string        `json:"instrument_name"`
+	Amount               float64       `json:"amount,omitempty"`
+	Contracts            int64         `json:"contracts,omitempty"`
+	Type                 string        `json:"type,omitempty"`
+	Label                string        `json:"label,omitempty"`
+	Price                float64       `json:"price,omitempty"`
+	TimeInForce          string        `json:"time_in_force,omitempty"`
+	MaxShow              int64         `json:"max_show,omitempty"`
+	PostOnly             bool          `json:"post_only,omitempty"`
+	RejectPostOnly       bool          `json:"reject_post_only,omitempty"`
+	ReduceOnly           bool          `json:"reduce_only,omitempty"`
+	TriggerPrice         float64       `json:"trigger_price,omitempty"`
+	TriggerOffset        float64       `json:"trigger_offset,omitempty"`
+	Trigger              string        `json:"trigger,omitempty"`
+	Advanced             string        `json:"advanced,omitempty"`
+	MMP                  bool          `json:"mmp,omitempty"`
+	ValidUntil           int64         `json:"valid_until,omitempty"`
+	LinkedOrderType      string        `json:"linked_order_type,omitempty"`
+	TriggerFillCondition string        `json:"trigger_fill_condition,omitempty"`
+	OTOCOConfig          []OTOCOConfig `json:"otoco_config,omitempty"`
 }
 
 type OrderResultOrderResponse struct {
@@ -164,13 +164,13 @@ func CreateBuyOrder(client *DeribitClient, orderRequest *OrderRequest) error {
 	// Send the order request over the WebSocket
 	err = client.conn.WriteMessage(websocket.TextMessage, jsonMsg)
 	if err != nil {
-		return fmt.Errorf("failed to send order request: %v", err)
+		return fmt.Errorf("failed to send order request: %w", err)
 	}
 
 	// Listen for the response
 	_, message, err := client.conn.ReadMessage()
 	if err != nil {
-		return fmt.Errorf("failed to read response: %v", err)
+		return fmt.Errorf("failed to read response: %w", err)
 	}
 
 	log.Printf("Received buy order response: %s", message)
@@ -192,16 +192,16 @@ func CreateSellOrder(client *DeribitClient, orderRequest *OrderRequest) error {
 	// Send the order request over the WebSocket
 	err = client.conn.WriteMessage(websocket.TextMessage, jsonMsg)
 	if err != nil {
-		return fmt.Errorf("failed to send order request: %v", err)
+		return fmt.Errorf("failed to send order request: %w", err)
 	}
 
 	// Listen for the response
 	_, message, err := client.conn.ReadMessage()
 	if err != nil {
-		return fmt.Errorf("failed to read response: %v", err)
+		return fmt.Errorf("failed to read response: %w", err)
 	}
 
-	log.Printf("Received sell order response: %s", message)
+	log.Printf("Received sell order response: %s \n", message)
 
 	return nil
 }
@@ -231,22 +231,41 @@ func CancelOneOrder(client *DeribitClient, orderId string) error {
 	// Read the response
 	_, message, err := client.conn.ReadMessage()
 	if err != nil {
-		return fmt.Errorf("failed to read cancel order response: %v", err)
+		return fmt.Errorf("failed to read cancel order response: %w", err)
 	}
 
-	log.Printf("Received cancel order response: %s", message)
+	log.Printf("Received cancel order response: %s \n", message)
 
 	return nil
 }
 
-func HandleOrderMessage(message []byte) (*OrderResponse, error) {
-	// Handle the order response
-	var orderResponse OrderResponse
-	err := json.Unmarshal(message, &orderResponse)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal order response: %v", err)
+func CancelAllOrders(client *DeribitClient) error {
+	// Prepare the cancel order request
+	msg := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "private/cancel_all",
+		"params":  map[string]interface{}{},
 	}
 
-	log.Printf("Received order response: %+v", orderResponse)
-	return &orderResponse, nil
+	// Marshal the request to JSON
+	jsonMsg, err := json.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("failed to marshal cancel all order request: %w", err)
+	}
+
+	// Send the cancel order request over the WebSocket
+	err = client.conn.WriteMessage(websocket.TextMessage, jsonMsg)
+	if err != nil {
+		return fmt.Errorf("failed to send cancel all order request: %v", err)
+	}
+
+	// Read the response
+	_, message, err := client.conn.ReadMessage()
+	if err != nil {
+		return fmt.Errorf("failed to read cancel all order response: %w", err)
+	}
+
+	log.Printf("Received cancel all order response: %s \n", message)
+
+	return nil
 }
