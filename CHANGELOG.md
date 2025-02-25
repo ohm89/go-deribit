@@ -1,3 +1,20 @@
+# 0.2.0 
+
+- [NEW] api/account.go
+- [NEW] api/auth.go
+- [NEW] api/client.go
+- [NEW] api/order.go
+- [NEW] api/util.go
+
+- [TBD] api/position.go
+- [TBD] api/market.go
+
+# 0.1.0 
+
+- [NEW] ws/account.go
+- [NEW] ws/position.go
+- [NEW] ws/ausbaccount.go
+
 # 0.0.4
 
 - [NEW] cancelAll api

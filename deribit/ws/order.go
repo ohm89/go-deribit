@@ -3,7 +3,6 @@ package ws
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/gorilla/websocket"
 )
@@ -140,14 +139,14 @@ type OrderResultTradeResponse struct {
 }
 
 type OrderResultResponse struct {
-	Order  OrderResultOrderResponse   `json:order`
-	Trades []OrderResultTradeResponse `json:trades`
+	Order  OrderResultOrderResponse   `json:"order"`
+	Trades []OrderResultTradeResponse `json:"trades"`
 }
 
 type OrderResponse struct {
 	Id      uint64              `json:"id"`
-	Jsonrpc string              `json:jsonrpc`
-	Result  OrderResultResponse `json:result`
+	Jsonrpc string              `json:"jsonrpc"`
+	Result  OrderResultResponse `json:"result"`
 }
 
 func CreateBuyOrder(client *DeribitClient, orderRequest *OrderRequest) error {
@@ -168,12 +167,12 @@ func CreateBuyOrder(client *DeribitClient, orderRequest *OrderRequest) error {
 	}
 
 	// Listen for the response
-	_, message, err := client.conn.ReadMessage()
-	if err != nil {
-		return fmt.Errorf("failed to read response: %w", err)
-	}
+	// _, message, err := client.conn.ReadMessage()
+	// if err != nil {
+	// 	return fmt.Errorf("failed to read response: %w", err)
+	// }
 
-	log.Printf("Received buy order response: %s", message)
+	// log.Printf("Received buy order response: %s", message)
 
 	return nil
 }
@@ -196,12 +195,12 @@ func CreateSellOrder(client *DeribitClient, orderRequest *OrderRequest) error {
 	}
 
 	// Listen for the response
-	_, message, err := client.conn.ReadMessage()
-	if err != nil {
-		return fmt.Errorf("failed to read response: %w", err)
-	}
+	// _, message, err := client.conn.ReadMessage()
+	// if err != nil {
+	// 	return fmt.Errorf("failed to read response: %w", err)
+	// }
 
-	log.Printf("Received sell order response: %s \n", message)
+	// log.Printf("Received sell order response: %s \n", message)
 
 	return nil
 }
@@ -229,12 +228,12 @@ func CancelOneOrder(client *DeribitClient, orderId string) error {
 	}
 
 	// Read the response
-	_, message, err := client.conn.ReadMessage()
-	if err != nil {
-		return fmt.Errorf("failed to read cancel order response: %w", err)
-	}
+	// _, message, err := client.conn.ReadMessage()
+	// if err != nil {
+	// 	return fmt.Errorf("failed to read cancel order response: %w", err)
+	// }
 
-	log.Printf("Received cancel order response: %s \n", message)
+	// log.Printf("Received cancel order response: %s \n", message)
 
 	return nil
 }
@@ -260,12 +259,12 @@ func CancelAllOrders(client *DeribitClient) error {
 	}
 
 	// Read the response
-	_, message, err := client.conn.ReadMessage()
-	if err != nil {
-		return fmt.Errorf("failed to read cancel all order response: %w", err)
-	}
+	// _, message, err := client.conn.ReadMessage()
+	// if err != nil {
+	// 	return fmt.Errorf("failed to read cancel all order response: %w", err)
+	// }
 
-	log.Printf("Received cancel all order response: %s \n", message)
+	// log.Printf("Received cancel all order response: %s \n", message)
 
 	return nil
 }
