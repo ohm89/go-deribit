@@ -1,3 +1,7 @@
+# 0.3.0 
+
+- [NEW] api/market.go
+
 # 0.2.0 
 
 - [NEW] api/account.go

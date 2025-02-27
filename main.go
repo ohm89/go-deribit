@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"bitbucket.org/ohm89/go-deribit/deribit/api"
 	"bitbucket.org/ohm89/go-deribit/deribit/ws"
@@ -39,7 +40,8 @@ func main() {
 	fmt.Printf("\n\n********* Start Program %s *********** \n\n", config.NAME)
 
 	isUseWebSocket := false
-	isUseAPI := true
+	isUseOrderAPI := false
+	isUseMarketAPI := true
 
 	// ## ------ Websocket Testing and usage --------------
 	if isUseWebSocket {
@@ -250,8 +252,8 @@ func main() {
 		log.Println("Shutting down...")
 	}
 
-	// ## ------ API Testing and usage --------------
-	if isUseAPI {
+	// ## ------ API Testing and usage order.go --------------
+	if isUseOrderAPI {
 
 		// ## Create New http Client
 		apiClient := api.New(
@@ -626,6 +628,561 @@ func main() {
 		// fmt.Println("[2] GetAccountSummary Resp: ")
 		// fmt.Printf("%#v", dataResponse2)
 		// fmt.Printf("\n\n")
+
+	}
+
+	// ## ------ API Testing and usage market.go --------------
+	if isUseMarketAPI {
+
+		// ## Create New http Client
+		apiClient := api.New(
+			"https://"+config.API_URL,
+			config.CLIENT_ID,
+			config.CLIENT_SECRET,
+		)
+
+		// @@ ------------ [1] GetFundingChartData --------
+
+		requestFundingChartData := &api.FundingChartDataRequest{
+			InstrumentName: "BTC-PERPETUAL",
+			Length:         "8h", // Can be "8h", "24h", or "1m"
+		}
+
+		fundingChartDataResponse, err := apiClient.Markets.GetFundingChartData(requestFundingChartData)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetFundingChartData]: %+v", err)
+		}
+
+		fmt.Printf("Current interest: %f\n", fundingChartDataResponse.Result.CurrentInterest)
+		fmt.Printf("Current interest_8h: %v\n", fundingChartDataResponse.Result.Interest8h)
+		fmt.Println("")
+		// fmt.Printf("Current funding chart data: %v\n", fundingChartDataResponse.Result.Data)
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [2] GetFundingRateHistory --------
+		now := time.Now()
+		oneWeekAgo := now.Add(-7 * 24 * time.Hour) // 7 days ago
+		startTimestamp := oneWeekAgo.Unix() * 1000 // Convert to milliseconds
+		// Get current timestamp
+		endTimestamp := now.Unix() * 1000 // Current timestamp in milliseconds
+
+		instrumentName := "BTC-PERPETUAL" // September 27, 2019 00:00:00 UTC
+
+		fundingRateHistoryResponse, err := apiClient.Markets.GetFundingRateHistory(
+			instrumentName,
+			startTimestamp,
+			endTimestamp,
+		)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetFundingRateHistory]: %+v", err)
+		}
+
+		fmt.Println("Funding Rate History:")
+		fmt.Println("")
+		fmt.Printf("%+v\n", fundingRateHistoryResponse.Result)
+		fmt.Println("")
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [3] GetFundingRateValue --------
+		now = time.Now()
+		oneWeekAgo = now.Add(-7 * 24 * time.Hour) // 7 days ago
+		startTimestamp = oneWeekAgo.Unix() * 1000 // Convert to milliseconds
+		// Get current timestamp
+		endTimestamp = now.Unix() * 1000 // Current timestamp in milliseconds
+
+		instrumentName = "BTC-PERPETUAL" // September 27, 2019 00:00:00 UTC
+
+		fundingRateValueResponse, err := apiClient.Markets.GetFundingRateValue(
+			instrumentName,
+			startTimestamp,
+			endTimestamp,
+		)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetFundingRateValue]: %+v", err)
+		}
+
+		fmt.Println("Funding Rate Value:")
+		fmt.Println("")
+		fmt.Printf("%+v\n", fundingRateValueResponse.Result)
+		fmt.Println("")
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [4] GetHistoricalVolatility --------
+		currency := "BTC"
+
+		historicalVolatilityResponse, err := apiClient.Markets.GetHistoricalVolatility(currency)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetHistoricalVolatility]: %+v", err)
+		}
+
+		for _, entry := range historicalVolatilityResponse.Result {
+			timestamp := entry[0]
+			volatility := entry[1]
+			entryTime := time.Unix(int64(timestamp/1000), 0).Format("2006-01-02 15:04:05")
+			// fmt.Printf("Timestamp: %d, Volatility: %f\n", int64(timestamp), volatility)
+			fmt.Printf("Timestamp: %s, Volatility: %f\n", entryTime, volatility)
+		}
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [5] GetIndexPrice --------
+
+		// Example usage of GetIndexPrice
+		indexName := "btc_usd"
+
+		indexPriceResponse, err := apiClient.Markets.GetIndexPrice(indexName)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetIndexPrice]: %+v", err)
+		}
+
+		fmt.Printf("Index Price: %f\n", indexPriceResponse.Result.IndexPrice)
+		fmt.Printf("Estimated Delivery Price: %f\n", indexPriceResponse.Result.EstimatedDeliveryPrice)
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [6] GetIndexPriceNames --------
+		indexPriceNamesResponse, err := apiClient.Markets.GetIndexPriceNames()
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetIndexPriceNames]: %+v", err)
+		}
+
+		fmt.Println("Available Index Price Names:")
+		for _, indexName := range indexPriceNamesResponse.Result {
+			fmt.Println(indexName)
+		}
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [7] GetInstrument --------
+		instrumentName = "BTC-PERPETUAL"
+
+		instrumentResponse, err := apiClient.Markets.GetInstrument(instrumentName)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetInstrument]: %+v", err)
+		}
+
+		fmt.Println("GetInstrument:")
+		fmt.Printf("%+v\n", instrumentResponse.Result)
+		fmt.Println("")
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [8] GetInstruments --------
+		currency = "USDC"
+		kind := "spot"
+		expired := false
+
+		instrumentsResponse, err := apiClient.Markets.GetInstruments(currency, kind, expired)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetInstruments]: %+v", err)
+		}
+
+		fmt.Println("Available Instruments:")
+		for _, instrument := range instrumentsResponse.Result {
+			fmt.Printf("Instrument Name: %s\n", instrument.InstrumentName)
+			fmt.Printf("Instrument ID: %d\n", instrument.InstrumentID)
+			fmt.Printf("Kind: %s\n", instrument.Kind)
+			fmt.Printf("Base Currency: %s\n", instrument.BaseCurrency)
+			fmt.Printf("Quote Currency: %s\n", instrument.QuoteCurrency)
+			fmt.Printf("Settlement Currency: %s\n", instrument.SettlementCurrency)
+			fmt.Printf("Settlement Period: %s\n", instrument.SettlementPeriod)
+			fmt.Printf("Expiration Timestamp: %d\n", instrument.ExpirationTimestamp)
+			fmt.Printf("Creation Timestamp: %d\n", instrument.CreationTimestamp)
+			fmt.Printf("Contract Size: %f\n", instrument.ContractSize)
+			fmt.Printf("Tick Size: %f\n", instrument.TickSize)
+			fmt.Printf("Maker Commission: %f\n", instrument.MakerCommission)
+			fmt.Printf("Taker Commission: %f\n", instrument.TakerCommission)
+			fmt.Printf("Block Trade Tick Size: %f\n", instrument.BlockTradeTickSize)
+			fmt.Printf("Block Trade Min Trade Amount: %f\n", instrument.BlockTradeMinTradeAmount)
+			fmt.Printf("Block Trade Commission: %f\n", instrument.BlockTradeCommission)
+			fmt.Printf("Instrument Type: %s\n", instrument.InstrumentType)
+			// fmt.Printf("Max Leverage: %d\n", int(instrument.MaxLeverage))
+			// fmt.Printf("Max Liquidation Commission: %f\n", instrument.MaxLiquidationCommission)
+			fmt.Printf("Minimum Trade Amount: %f\n", instrument.MinTradeAmount)
+			fmt.Printf("Is Active: %t\n", instrument.IsActive)
+			fmt.Println("")
+		}
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [9] GetLastSettlementsByInstrument --------
+		instrumentName = "BTC-PERPETUAL"
+		settlementType := "settlement"
+		count := 1
+		continuation := ""
+		searchStartTimestamp := time.Now().Add(-7*24*time.Hour).Unix() * 1000 // 7 days ago
+
+		lastSettlementsResponse, err := apiClient.Markets.GetLastSettlementsByInstrument(instrumentName, settlementType, count, continuation, searchStartTimestamp)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetLastSettlementsByInstrument]: %+v", err)
+		}
+
+		fmt.Println("Last Settlements:")
+		for _, settlement := range lastSettlementsResponse.Result.Settlements {
+			fmt.Printf("Timestamp: %d, Type: %s, Instrument Name: %s, Position: %f, Profit/Loss: %f\n",
+				settlement.Timestamp, settlement.Type, settlement.InstrumentName, settlement.Position, settlement.ProfitLoss)
+		}
+
+		if lastSettlementsResponse.Result.Continuation != "" {
+			fmt.Printf("Continuation token: %s\n", lastSettlementsResponse.Result.Continuation)
+		}
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [10] GetLastTradesByCurrencyAndTime --------
+		currency = "BTC"
+		startTimestamp = time.Now().Add(-1*time.Hour).Unix() * 1000 // 1 hour ago
+		endTimestamp = time.Now().Unix() * 1000                     // Current timestamp
+		count = 5
+
+		lastTradesByCurrencyAndTimeResponse, err := apiClient.Markets.GetLastTradesByCurrencyAndTime(currency, startTimestamp, endTimestamp, count)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetLastTradesByCurrencyAndTime]: %+v", err)
+		}
+
+		fmt.Println("Last Trades [GetLastTradesByCurrencyAndTime]:")
+		for _, trade := range lastTradesByCurrencyAndTimeResponse.Result.Trades {
+			entryTime := time.Unix(int64(trade.Timestamp/1000), 0).Format("2006-01-02 15:04:05")
+			// fmt.Printf("Timestamp: %d, Instrument Name: %s, Direction: %s, Price: %f, Amount: %f\n",
+			// 	trade.Timestamp, trade.InstrumentName, trade.Direction, trade.Price, trade.Amount)
+
+			fmt.Printf("Timestamp: %s, Instrument Name: %s, Direction: %s, Price: %f, Amount: %f\n",
+				entryTime, trade.InstrumentName, trade.Direction, trade.Price, trade.Amount)
+		}
+
+		if lastTradesByCurrencyAndTimeResponse.Result.HasMore {
+			fmt.Println("More trades available")
+		}
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [11] GetLastTradesByInstrument --------
+		instrumentName = "BTC-PERPETUAL"
+		startSeq := 0
+		endSeq := 0
+		startTimestamp = time.Now().Add(-1*time.Hour).Unix() * 1000 // 1 hour ago
+		endTimestamp = time.Now().Unix() * 1000                     // Current timestamp
+		count = 10
+		sorting := "default"
+
+		lastTradesByInstrumentResponse, err := apiClient.Markets.GetLastTradesByInstrument(instrumentName, startSeq, endSeq, startTimestamp, endTimestamp, count, sorting)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetLastTradesByInstrument]: %+v", err)
+		}
+
+		fmt.Println("Last Trades [GetLastTradesByInstrument]:")
+		for _, trade := range lastTradesByInstrumentResponse.Result.Trades {
+			// fmt.Printf("Timestamp: %d, Trade ID: %s, Instrument Name: %s, Direction: %s, Price: %f, Amount: %f\n",
+			// 	trade.Timestamp, trade.TradeID, trade.InstrumentName, trade.Direction, trade.Price, trade.Amount)
+
+			entryTime := time.Unix(int64(trade.Timestamp/1000), 0).Format("2006-01-02 15:04:05")
+			// fmt.Printf("Timestamp: %d, Instrument Name: %s, Direction: %s, Price: %f, Amount: %f\n",
+			// 	trade.Timestamp, trade.InstrumentName, trade.Direction, trade.Price, trade.Amount)
+
+			fmt.Printf("Timestamp: %s, Instrument Name: %s, Direction: %s, Price: %f, Amount: %f\n",
+				entryTime, trade.InstrumentName, trade.Direction, trade.Price, trade.Amount)
+		}
+
+		if lastTradesByInstrumentResponse.Result.HasMore {
+			fmt.Println("More trades available")
+		}
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [12] GetLastTradesByInstrumentAndTime --------
+		instrumentName = "ETH-PERPETUAL"
+		startTimestamp = time.Now().Add(-1*time.Hour).Unix() * 1000 // 1 hour ago
+		endTimestamp = time.Now().Unix() * 1000                     // Current timestamp
+		count = 10
+		sorting = "default"
+
+		lastTradesByInstrumentAndTimeResponse, err := apiClient.Markets.GetLastTradesByInstrumentAndTime(instrumentName, startTimestamp, endTimestamp, count, sorting)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetLastTradesByInstrumentAndTime]: %+v", err)
+		}
+
+		fmt.Println("Last Trades:")
+		for _, trade := range lastTradesByInstrumentAndTimeResponse.Result.Trades {
+			// fmt.Printf("Timestamp: %d, Trade ID: %s, Instrument Name: %s, Direction: %s, Price: %f, Amount: %f\n",
+			// 	trade.Timestamp, trade.TradeID, trade.InstrumentName, trade.Direction, trade.Price, trade.Amount)
+
+			entryTime := time.Unix(int64(trade.Timestamp/1000), 0).Format("2006-01-02 15:04:05")
+			fmt.Printf("Timestamp: %s, Trade ID: %s, Instrument Name: %s, Direction: %s, Price: %f, Amount: %f\n",
+				entryTime, trade.TradeID, trade.InstrumentName, trade.Direction, trade.Price, trade.Amount)
+
+		}
+
+		if lastTradesByInstrumentAndTimeResponse.Result.HasMore {
+			fmt.Println("More trades available")
+		}
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [13] GetMarkPriceHistory --------
+		instrumentName = "BTC-PERPETUAL"
+		startTimestamp = time.Now().Add(-1*time.Hour).Unix() * 1000 // 4 hour ago
+		endTimestamp = time.Now().Unix() * 1000                     // Current timestamp
+		// resolution := "5min"
+
+		markPriceHistoryResponse, err := apiClient.Markets.GetMarkPriceHistory(instrumentName, startTimestamp, endTimestamp)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetMarkPriceHistory]: %+v", err)
+		}
+
+		fmt.Println("Mark Price History:")
+		fmt.Printf("%+v", markPriceHistoryResponse.Result)
+		for _, entry := range markPriceHistoryResponse.Result {
+			timestamp := int64(entry[0])
+			markPrice := entry[1]
+			entryTime := time.Unix(int64(timestamp/1000), 0).Format("2006-01-02 15:04:05")
+			// fmt.Printf("Timestamp: %d, Mark Price: %f\n", timestamp, markPrice)
+			fmt.Printf("Timestamp: %s, Mark Price: %f\n", entryTime, markPrice)
+		}
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [14] GetOrderBook --------
+		instrumentName = "BTC_USDC"
+		depth := 5
+
+		orderBookResponse, err := apiClient.Markets.GetOrderBook(instrumentName, depth)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetOrderBook]: %+v", err)
+		}
+
+		fmt.Println("GetOrderBook:")
+		fmt.Printf("Instrument Name: %s\n", orderBookResponse.Result.InstrumentName)
+		fmt.Printf("Timestamp: %d\n", orderBookResponse.Result.Timestamp)
+		fmt.Printf("Index Price: %f\n", orderBookResponse.Result.IndexPrice)
+		fmt.Printf("Mark Price: %f\n", orderBookResponse.Result.MarkPrice)
+		fmt.Printf("Last Price: %f\n", orderBookResponse.Result.LastPrice)
+		fmt.Printf("Open Interest: %f\n", orderBookResponse.Result.OpenInterest)
+		fmt.Printf("Current Funding: %f\n", orderBookResponse.Result.CurrentFunding)
+		fmt.Printf("Funding 8h: %f\n", orderBookResponse.Result.Funding8h)
+
+		fmt.Println("\nBids:")
+		for _, bid := range orderBookResponse.Result.Bids {
+			fmt.Printf("Price: %f, Amount: %f\n", bid[0], bid[1])
+		}
+
+		fmt.Println("\nAsks:")
+		for _, ask := range orderBookResponse.Result.Asks {
+			fmt.Printf("Price: %f, Amount: %f\n", ask[0], ask[1])
+		}
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [15] GetOrderBookByInstrumentId --------
+		instrumentID := 404150 // BTC_USDC
+		if instrumentResponse.Result.InstrumentID != 0 {
+			instrumentID = int(instrumentResponse.Result.InstrumentID)
+		}
+		depth = 10
+
+		orderBookByInstrumentResponse, err := apiClient.Markets.GetOrderBookByInstrumentId(instrumentID, depth)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetOrderBookByInstrumentId]: %+v", err)
+		}
+
+		fmt.Println("GetOrderBookByInstrumentId: ")
+		fmt.Printf("Instrument Name: %s\n", orderBookByInstrumentResponse.Result.InstrumentName)
+		fmt.Printf("Timestamp: %d\n", orderBookByInstrumentResponse.Result.Timestamp)
+		fmt.Printf("Index Price: %f\n", orderBookByInstrumentResponse.Result.IndexPrice)
+		fmt.Printf("Mark Price: %f\n", orderBookByInstrumentResponse.Result.MarkPrice)
+		fmt.Printf("Last Price: %f\n", orderBookByInstrumentResponse.Result.LastPrice)
+		fmt.Printf("Open Interest: %f\n", orderBookByInstrumentResponse.Result.OpenInterest)
+		fmt.Printf("Current Funding: %f\n", orderBookByInstrumentResponse.Result.CurrentFunding)
+		fmt.Printf("Funding 8h: %f\n", orderBookByInstrumentResponse.Result.Funding8h)
+
+		fmt.Println("\nBids:")
+		for _, bid := range orderBookByInstrumentResponse.Result.Bids {
+			fmt.Printf("Price: %f, Amount: %f\n", bid[0], bid[1])
+		}
+
+		fmt.Println("\nAsks:")
+		for _, ask := range orderBookByInstrumentResponse.Result.Asks {
+			fmt.Printf("Price: %f, Amount: %f\n", ask[0], ask[1])
+		}
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [16] GetTradeVolumes --------
+		extended := true
+
+		tradeVolumesResponse, err := apiClient.Markets.GetTradeVolumes(extended)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetTradeVolumes]: %+v", err)
+		}
+
+		fmt.Println("Trade Volumes:")
+		for _, volume := range tradeVolumesResponse.Result {
+			fmt.Printf("Currency: %s\n", volume.Currency)
+			fmt.Printf("Calls Volume: %f\n", volume.CallsVolume)
+			fmt.Printf("Puts Volume: %f\n", volume.PutsVolume)
+			fmt.Printf("Futures Volume: %f\n", volume.FuturesVolume)
+			fmt.Printf("Spot Volume: %f\n", volume.SpotVolume)
+			if extended {
+				fmt.Printf("Calls Volume 7d: %f\n", volume.CallsVolume7d)
+				fmt.Printf("Calls Volume 30d: %f\n", volume.CallsVolume30d)
+				fmt.Printf("Puts Volume 7d: %f\n", volume.PutsVolume7d)
+				fmt.Printf("Puts Volume 30d: %f\n", volume.PutsVolume30d)
+				fmt.Printf("Futures Volume 7d: %f\n", volume.FuturesVolume7d)
+				fmt.Printf("Futures Volume 30d: %f\n", volume.FuturesVolume30d)
+				fmt.Printf("Spot Volume 7d: %f\n", volume.SpotVolume7d)
+				fmt.Printf("Spot Volume 30d: %f\n", volume.SpotVolume30d)
+			}
+			fmt.Println()
+		}
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [17] GetTradingViewChartData --------
+		instrumentName = "BTC_USDC"
+		startTimestamp = time.Now().Add(-4*time.Hour).Unix() * 1000 // 4 hour ago
+		endTimestamp = time.Now().Unix() * 1000                     // Current timestamp
+		resolution := "30"
+
+		tradingViewChartDataResponse, err := apiClient.Markets.GetTradingViewChartData(instrumentName, startTimestamp, endTimestamp, resolution)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetTradingViewChartData]: %+v", err)
+		}
+
+		fmt.Println("GetTradingViewChartData: ")
+		fmt.Printf("Instrument Name: %s\n", instrumentName)
+		fmt.Printf("Status: %s\n", tradingViewChartDataResponse.Result.Status)
+
+		fmt.Println("\nOpen:")
+		for i, open := range tradingViewChartDataResponse.Result.Open {
+			fmt.Printf("Timestamp: %d, Open: %f\n", tradingViewChartDataResponse.Result.Ticks[i], open)
+		}
+
+		fmt.Println("\nHigh:")
+		for i, high := range tradingViewChartDataResponse.Result.High {
+			fmt.Printf("Timestamp: %d, High: %f\n", tradingViewChartDataResponse.Result.Ticks[i], high)
+		}
+
+		fmt.Println("\nLow:")
+		for i, low := range tradingViewChartDataResponse.Result.Low {
+			fmt.Printf("Timestamp: %d, Low: %f\n", tradingViewChartDataResponse.Result.Ticks[i], low)
+		}
+
+		fmt.Println("\nClose:")
+		for i, close := range tradingViewChartDataResponse.Result.Close {
+			fmt.Printf("Timestamp: %d, Close: %f\n", tradingViewChartDataResponse.Result.Ticks[i], close)
+		}
+
+		fmt.Println("\nVolume:")
+		for i, volume := range tradingViewChartDataResponse.Result.Volume {
+			fmt.Printf("Timestamp: %d, Volume: %f\n", tradingViewChartDataResponse.Result.Ticks[i], volume)
+		}
+
+		fmt.Println("\nCost:")
+		for i, cost := range tradingViewChartDataResponse.Result.Cost {
+			fmt.Printf("Timestamp: %d, Cost: %f\n", tradingViewChartDataResponse.Result.Ticks[i], cost)
+		}
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [18] GetVolatilityIndexData --------
+		currency = "BTC"
+		startTimestamp = time.Now().Add(-24*time.Hour).Unix() * 1000 // 24 hour ago
+		endTimestamp = time.Now().Unix() * 1000                      // Current timestamp
+		resolution = "1D"
+
+		volatilityIndexDataResponse, err := apiClient.Markets.GetVolatilityIndexData(currency, startTimestamp, endTimestamp, resolution)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetVolatilityIndexData]: %+v", err)
+		}
+
+		fmt.Println("GetVolatilityIndexData: ")
+		fmt.Printf("Currency: %s\n", currency)
+		fmt.Printf("Continuation: %s\n", volatilityIndexDataResponse.Result.Continuation)
+
+		fmt.Println("\nVolatility Index Data:")
+		for _, data := range volatilityIndexDataResponse.Result.Data {
+			timestamp := int64(data[0])
+			open := data[1]
+			high := data[2]
+			low := data[3]
+			close := data[4]
+			fmt.Printf("Timestamp: %d, Open: %f, High: %f, Low: %f, Close: %f\n", timestamp, open, high, low, close)
+		}
+
+		fmt.Println("")
+		fmt.Println("")
+
+		// @@ ------------ [19] GetTicker --------
+		instrumentName = "BTC_USDC"
+
+		tickerResponse, err := apiClient.Markets.GetTicker(instrumentName)
+		if err != nil {
+			// Handle error
+			log.Fatalf("failed [GetTicker]: %+v", err)
+		}
+
+		fmt.Println("GetTicker: ")
+		fmt.Printf("%+v\n", tickerResponse)
+		fmt.Printf("\n")
+
+		fmt.Printf("Instrument Name: %s\n", tickerResponse.Result.InstrumentName)
+		fmt.Printf("Timestamp: %d\n", tickerResponse.Result.Timestamp)
+		fmt.Printf("Best Bid Price: %f\n", tickerResponse.Result.BestBidPrice)
+		fmt.Printf("Best Bid Amount: %f\n", tickerResponse.Result.BestBidAmount)
+		fmt.Printf("Best Ask Price: %f\n", tickerResponse.Result.BestAskPrice)
+		fmt.Printf("Best Ask Amount: %f\n", tickerResponse.Result.BestAskAmount)
+		fmt.Printf("Last Price: %f\n", tickerResponse.Result.LastPrice)
+		fmt.Printf("Mark Price: %f\n", tickerResponse.Result.MarkPrice)
+		fmt.Printf("Index Price: %f\n", tickerResponse.Result.IndexPrice)
+		fmt.Printf("Settlement Price: %f\n", tickerResponse.Result.SettlementPrice)
+		fmt.Printf("Open Interest: %f\n", tickerResponse.Result.OpenInterest)
+		fmt.Printf("Current Funding: %f\n", tickerResponse.Result.CurrentFunding)
+		fmt.Printf("Funding 8h: %f\n", tickerResponse.Result.Funding8h)
+		fmt.Printf("Estimated Delivery Price: %f\n", tickerResponse.Result.EstimatedDeliveryPrice)
+		fmt.Printf("State: %s\n", tickerResponse.Result.State)
+		fmt.Printf("High: %f\n", tickerResponse.Result.Stats.High)
+		fmt.Printf("Low: %f\n", tickerResponse.Result.Stats.Low)
+		fmt.Printf("Price Change: %f\n", tickerResponse.Result.Stats.PriceChange)
+		fmt.Printf("Volume: %f\n", tickerResponse.Result.Stats.Volume)
+		fmt.Printf("Volume USD: %f\n", tickerResponse.Result.Stats.VolumeUSD)
+
+		fmt.Println("")
+		fmt.Println("")
 
 	}
 }
