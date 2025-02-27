@@ -6,6 +6,10 @@ Deribit websocket and api driver library in GO lang
 
 - /api/v2 usage for now
 
+## Enviroment settings
+
+- change config/example.json to config/development.json for dev
+
 ## For Testing and usage
 
 - check main.go

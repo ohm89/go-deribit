@@ -21,6 +21,7 @@ type DeribitClient struct {
 	clientSecret string
 	accessToken  string
 	refreshToken string
+	isPrivate    bool
 }
 
 type heartBeatResponse struct {
@@ -88,6 +89,168 @@ func (c *DeribitClient) Subscribe(channels ...string) error {
 	err = c.conn.WriteMessage(websocket.TextMessage, jsonMsg)
 	if err != nil {
 		// log.Fatalf("failed to send subscription message: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (c *DeribitClient) PrivateSubscribe(channels ...string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.channels = append(c.channels, channels...)
+
+	msg := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      1,
+		"method":  "private/subscribe",
+		"params": map[string]interface{}{
+			"channels": c.channels,
+		},
+	}
+
+	jsonMsg, err := json.Marshal(msg)
+	if err != nil {
+		// log.Fatalf("failed to marshal subscription message: %v", err)
+		return err
+	}
+
+	err = c.conn.WriteMessage(websocket.TextMessage, jsonMsg)
+	if err != nil {
+		// log.Fatalf("failed to send subscription message: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (c *DeribitClient) Unsubscribe(channels ...string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Remove the channels from the list of subscribed channels
+	newChannels := make([]string, 0, len(c.channels))
+	for _, ch := range c.channels {
+		found := false
+		for _, unsubCh := range channels {
+			if ch == unsubCh {
+				found = true
+				break
+			}
+		}
+		if !found {
+			newChannels = append(newChannels, ch)
+		}
+	}
+	c.channels = newChannels
+
+	msg := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      1,
+		"method":  "public/unsubscribe",
+		"params": map[string]interface{}{
+			"channels": channels,
+		},
+	}
+
+	jsonMsg, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+
+	err = c.conn.WriteMessage(websocket.TextMessage, jsonMsg)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *DeribitClient) PrivateUnsubscribe(channels ...string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Remove the channels from the list of subscribed channels
+	newChannels := make([]string, 0, len(c.channels))
+	for _, ch := range c.channels {
+		found := false
+		for _, unsubCh := range channels {
+			if ch == unsubCh {
+				found = true
+				break
+			}
+		}
+		if !found {
+			newChannels = append(newChannels, ch)
+		}
+	}
+	c.channels = newChannels
+
+	msg := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      1,
+		"method":  "private/unsubscribe",
+		"params": map[string]interface{}{
+			"channels": channels,
+		},
+	}
+
+	jsonMsg, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+
+	err = c.conn.WriteMessage(websocket.TextMessage, jsonMsg)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *DeribitClient) UnsubscribeAll() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	msg := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      1,
+		"method":  "public/unsubscribe_all",
+		"params":  map[string]interface{}{},
+	}
+
+	jsonMsg, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+
+	err = c.conn.WriteMessage(websocket.TextMessage, jsonMsg)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *DeribitClient) PrivateUnsubscribeAll() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	msg := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      1,
+		"method":  "private/unsubscribe_all",
+		"params":  map[string]interface{}{},
+	}
+
+	jsonMsg, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+
+	err = c.conn.WriteMessage(websocket.TextMessage, jsonMsg)
+	if err != nil {
 		return err
 	}
 
@@ -203,7 +366,7 @@ func (c *DeribitClient) handleTextMessage(message []byte) {
 	case "heartbeat":
 		c.handleHeartbeat()
 	default:
-		fmt.Printf("Received message: %s\n", message)
+		fmt.Printf("Received message [Private: %t]: %s\n\n", c.isPrivate, message)
 	}
 }
 
@@ -219,7 +382,11 @@ func (c *DeribitClient) reconnect() error {
 	}
 
 	// Resubscribe to the channels
-	err = c.Subscribe(c.channels...)
+	if c.isPrivate {
+		err = c.PrivateSubscribe(c.channels...)
+	} else {
+		err = c.Subscribe(c.channels...)
+	}
 	if err != nil {
 		return err
 	}

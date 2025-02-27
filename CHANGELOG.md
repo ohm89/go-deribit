@@ -1,3 +1,9 @@
+# 0.3.1 
+
+- [NEW-FEATURE] ws/client.go add PrivateSubscribe, PrivateUnsubscribe, PrivateUnsubscribeAll, Unsubscribe, UnsubscribeAll function to use
+
+- [TEST] main.go add example usage of different channel from api playground
+
 # 0.3.0 
 
 - [NEW] api/market.go

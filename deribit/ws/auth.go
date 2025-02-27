@@ -86,6 +86,8 @@ func Authenticate(c *DeribitClient) (*AuthResponse, error) {
 	c.accessToken = accessToken
 	c.refreshToken = refreshToken
 
+	c.isPrivate = true
+
 	// ## [DEBUG]
 	// fmt.Printf("\n\n Access Token: %s \n\n", c.accessToken)
 	// fmt.Printf("\n\n Refresh Token: %s \n\n", c.refreshToken)

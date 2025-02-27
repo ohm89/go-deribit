@@ -39,45 +39,47 @@ func main() {
 
 	fmt.Printf("\n\n********* Start Program %s *********** \n\n", config.NAME)
 
-	isUseWebSocket := false
+	isUsePrivateWebSocket := true
 	isUseOrderAPI := false
-	isUseMarketAPI := true
+	isUseMarketAPI := false
+
+	isUsePublicWebSocket := false
 
 	// ## ------ Websocket Testing and usage --------------
-	if isUseWebSocket {
+	if isUsePrivateWebSocket {
 
-		// ## ------ Create Market Client connection --------------
-		client := ws.NewDeribitClient(config.CLIENT_ID, config.CLIENT_SECRET)
+		// // ## ------ Create Market Client connection --------------
+		// client := ws.NewDeribitClient(config.CLIENT_ID, config.CLIENT_SECRET)
 
-		err := client.Connect(config.WS_URL)
-		if err != nil {
-			log.Fatalf("failed to connect: %v", err)
-		}
+		// err := client.Connect(config.WS_URL)
+		// if err != nil {
+		// 	log.Fatalf("failed to connect: %v", err)
+		// }
 
-		// ## Send Hello Software the WebSocket connection
-		err = client.Hello(config.NAME, config.VERSION)
-		if err != nil {
-			client.Close()
-			log.Fatalf("failed to hello: %v", err)
-		}
+		// // ## Send Hello Software the WebSocket connection
+		// err = client.Hello(config.NAME, config.VERSION)
+		// if err != nil {
+		// 	client.Close()
+		// 	log.Fatalf("failed to hello: %v", err)
+		// }
 
-		// ## Set WebSocket HeartBeat Interval
-		err = client.SetHeartBeat(60)
-		if err != nil {
-			client.Close()
-			log.Fatalf("failed to set heart beat: %v", err)
-		}
+		// // ## Set WebSocket HeartBeat Interval
+		// err = client.SetHeartBeat(60)
+		// if err != nil {
+		// 	client.Close()
+		// 	log.Fatalf("failed to set heart beat: %v", err)
+		// }
 
-		// ## Subscribe to multiple channels
-		err = client.Subscribe(
-			"deribit_price_index.btc_usd",
-			"deribit_price_index.btc_usdc",
-			"deribit_price_index.btc_usdt",
-		)
-		if err != nil {
-			client.Close()
-			log.Fatalf("failed to subscribe : %v", err)
-		}
+		// // ## Subscribe to multiple channels
+		// err = client.Subscribe(
+		// 	"deribit_price_index.btc_usd",
+		// 	"deribit_price_index.btc_usdc",
+		// 	"deribit_price_index.btc_usdt",
+		// )
+		// if err != nil {
+		// 	client.Close()
+		// 	log.Fatalf("failed to subscribe : %v", err)
+		// }
 
 		// ## ------ Create Private Client connection for trade --------------
 
@@ -96,7 +98,7 @@ func main() {
 		}
 
 		// ## Set WebSocket HeartBeat Interval
-		errPrivate = client.SetHeartBeat(60)
+		errPrivate = privateClient.SetHeartBeat(60)
 		if errPrivate != nil {
 			privateClient.Close()
 			log.Fatalf("failed to set heart beat: %v", errPrivate)
@@ -105,8 +107,46 @@ func main() {
 		// ## Authenticate the WebSocket connection
 		_, err4 := ws.Authenticate(privateClient)
 		if err4 != nil {
-			client.Close()
+			privateClient.Close()
 			log.Fatalf("failed to authenticate: %v", err4)
+		}
+
+		// ## Subscribe to multiple channels
+		err := privateClient.PrivateSubscribe(
+			"deribit_price_index.sol_usdc", // public market index price data
+			"trades.sol_usdc.raw",          // Trade Signal from our account
+			"ticker.SOL_USDC.raw",          // ## Ticker of btc_usdc pairs [raw/100ms]
+			"chart.trades.SOL_USDC.1",      // ## OHLCV of chart data [1/3/60 -> in minutes except 1D = 1 day]
+			"quote.SOL_USDC",               // ## Quote of btc_usdc pairs [raw/100ms]
+			"perpetual.SOL-PERPETUAL.raw",  // ## Perpetual of BTC-PERPETUAL pairs [raw/100ms
+		)
+		if err != nil {
+			privateClient.Close()
+			log.Fatalf("failed to PrivateSubscribe channel : %v", err)
+		}
+
+		// // ## UnSubscribe to all channels
+		// err = privateClient.PrivateUnsubscribeAll()
+		// if err != nil {
+		// 	privateClient.Close()
+		// 	log.Fatalf("failed to PrivateUnsubscribeAll : %v", err)
+		// }
+
+		// ## -------------- Test Create Buy Order 2 ---------------------
+
+		// ## Create a new buy order request
+		orderRequest := &ws.OrderRequest{
+			InstrumentName: "SOL_USDC",
+			Amount:         1,
+			Price:          10,
+			Type:           "limit",
+			Label:          "limit0000243",
+		}
+
+		errPrivate = ws.CreateBuyOrder(privateClient, orderRequest)
+		if errPrivate != nil {
+			privateClient.Close()
+			log.Fatalf("failed to create buy order: %v", errPrivate)
 		}
 
 		// ## -------------- Test Create Buy Order ---------------------
@@ -247,7 +287,7 @@ func main() {
 		<-sigChan
 
 		// ## Gracefully shut down the client
-		client.Close()
+		// client.Close()
 		privateClient.Close()
 		log.Println("Shutting down...")
 	}
@@ -1157,8 +1197,8 @@ func main() {
 		}
 
 		fmt.Println("GetTicker: ")
-		fmt.Printf("%+v\n", tickerResponse)
-		fmt.Printf("\n")
+		// fmt.Printf("%+v\n", tickerResponse)
+		// fmt.Printf("\n")
 
 		fmt.Printf("Instrument Name: %s\n", tickerResponse.Result.InstrumentName)
 		fmt.Printf("Timestamp: %d\n", tickerResponse.Result.Timestamp)
@@ -1184,5 +1224,76 @@ func main() {
 		fmt.Println("")
 		fmt.Println("")
 
+	}
+
+	// ## ------ [Public] Websocket Testing and usage --------------
+	if isUsePublicWebSocket {
+
+		// ## ------ Create Market Client connection --------------
+		client := ws.NewDeribitClient(config.CLIENT_ID, config.CLIENT_SECRET)
+
+		err := client.Connect(config.WS_URL)
+		if err != nil {
+			log.Fatalf("failed to connect: %v", err)
+		}
+
+		// ## Send Hello Software the WebSocket connection
+		err = client.Hello(config.NAME, config.VERSION)
+		if err != nil {
+			client.Close()
+			log.Fatalf("failed to hello: %v", err)
+		}
+
+		// ## Set WebSocket HeartBeat Interval
+		err = client.SetHeartBeat(60)
+		if err != nil {
+			client.Close()
+			log.Fatalf("failed to set heart beat: %v", err)
+		}
+
+		// ## Subscribe to multiple channels
+		// err = client.Subscribe(
+		// 	"deribit_price_index.btc_usd",
+		// 	"deribit_price_index.btc_usdc",
+		// 	"deribit_price_index.btc_usdt",
+		// )
+		err = client.Subscribe(
+			"deribit_price_index.btc_usdc",      // ## Index price
+			"deribit_volatility_index.btc_usdc", // ## Volatility Index
+			"deribit_price_statistics.btc_usdc", // ## Volatility Index
+			"ticker.BTC_USDC.100ms",             // ## Ticker of btc_usdc pairs [raw/100ms]
+			"chart.trades.BTC_USDC.1",           // ## OHLCV of chart data [1/3/60 -> in minutes except 1D = 1 day]
+			"quote.BTC_USDC",                    // ## Quote of btc_usdc pairs [raw/100ms]
+			"perpetual.BTC-PERPETUAL.100ms",     // ## Perpetual of BTC-PERPETUAL pairs [raw/100ms]
+			"markprice.options.btc_usdc",        // ## Options Market price by pairs of SPOT
+		)
+		if err != nil {
+			client.Close()
+			log.Fatalf("failed to subscribe : %v", err)
+		}
+
+		// ## UnSubscribe to multiple channels
+		err = client.Unsubscribe(
+			"deribit_price_index.btc_usdt",
+		)
+		if err != nil {
+			client.Close()
+			log.Fatalf("failed to Unsubscribe : %v", err)
+		}
+
+		// ## -------------- Main Loop (Concurrent GO) ---------------------
+		// Start concurrent tasks for HandleReadMessage and HandleHeartBeatMessage
+		// Start concurrent tasks for HandleReadMessage and HandleHeartBeatMessage
+		go client.Run()
+
+		// ## -------------- Termination ---------------------
+		// ## Wait for termination signals
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+		<-sigChan
+
+		// ## Gracefully shut down the client
+		client.Close()
+		log.Println("Shutting down...")
 	}
 }
