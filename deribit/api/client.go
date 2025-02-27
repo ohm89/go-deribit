@@ -75,6 +75,7 @@ func New(baseUrl string, clientID string, clientSecret string) *Client {
 	c.Markets = (*MarketService)(&c.common)
 	// c.Wallets = (*WalletService)(&c.common)
 	c.Orders = (*OrderService)(&c.common)
+	c.Positions = (*PositionService)(&c.common)
 	// c.Fills = (*FillsService)(&c.common)
 
 	return c

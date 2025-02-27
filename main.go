@@ -39,11 +39,145 @@ func main() {
 
 	fmt.Printf("\n\n********* Start Program %s *********** \n\n", config.NAME)
 
-	isUsePrivateWebSocket := true
+	isUsePrivateWebSocket := false
 	isUseOrderAPI := false
 	isUseMarketAPI := false
 
 	isUsePublicWebSocket := false
+	isUsePositionAPI := true
+
+	// ## ------ Websocket Testing and usage --------------
+	if isUsePositionAPI {
+		// ## Create New http Client
+		apiClient := api.New(
+			"https://"+config.API_URL,
+			config.CLIENT_ID,
+			config.CLIENT_SECRET,
+		)
+
+		// ## ------- [Pre-Condition] ----
+		// orderBuyResponse, err := apiClient.Orders.Buy(
+		// 	"SOL_USDC-PERPETUAL",
+		// 	0.1,
+		// 	0,
+		// 	"market",
+		// 	"my-sol-usdc-future-perp-test",
+		// 	0,
+		// 	"good_til_cancelled",
+		// 	0,
+		// 	false,
+		// 	false,
+		// 	false,
+		// 	0,
+		// 	0,
+		// 	"",
+		// 	"",
+		// 	false,
+		// 	0,
+		// 	"",
+		// 	"",
+		// 	nil,
+		// )
+		// if err != nil {
+		// 	log.Fatalf("failed [Buy-Future] API: %+v", err)
+		// }
+
+		// fmt.Println("[1] Buy Resp: ")
+		// fmt.Printf("%#v", orderBuyResponse)
+		// fmt.Printf("\n\n")
+
+		// ## ------- [GetPosition] ----
+		positionResponse, err := apiClient.Positions.GetPosition("SOL_USDC-PERPETUAL")
+		if err != nil {
+			// Handle the error
+			log.Fatalf("failed [GetPosition] API: %+v", err)
+		}
+
+		// Access the position details from the positionResponse.Result field
+		position := positionResponse.Result
+		fmt.Println("Position size:", position.Size)
+		fmt.Println("Mark price:", position.MarkPrice)
+		fmt.Println(" ")
+		fmt.Println(" ")
+
+		// ## ------- [GetPositions] ----
+		positionsResponse, err := apiClient.Positions.GetPositions("USDC", "future", 0)
+		if err != nil {
+			// Handle the error
+			log.Fatalf("failed [GetPositions] API: %+v", err)
+		}
+
+		// Access the positions from the positionsResponse.Result field
+		for _, position := range positionsResponse.Result {
+			fmt.Println("Instrument:", position.InstrumentName)
+			fmt.Println("Size:", position.Size)
+			fmt.Println("Mark Price:", position.MarkPrice)
+			// Access other position details as needed
+		}
+
+		fmt.Println(" ")
+		fmt.Println(" ")
+
+		// ## ------- [GetMargins] ----
+
+		marginsResponse, err := apiClient.Orders.GetMargins("SOL_USDC-PERPETUAL", 0.1, 139)
+		if err != nil {
+			// Handle the error
+			log.Fatalf("failed [GetMargins] API: %+v", err)
+		}
+
+		fmt.Println("Buy Margin:", marginsResponse.Result.Buy)
+		fmt.Println("Sell Margin:", marginsResponse.Result.Sell)
+		fmt.Println("Max Price:", marginsResponse.Result.MaxPrice)
+		fmt.Println("Min Price:", marginsResponse.Result.MinPrice)
+
+		fmt.Println(" ")
+		fmt.Println(" ")
+
+		// ## ------- [GetSimulateMargins] ----
+
+		simulatedPositions := map[string]float64{
+			"SOL_USDC-PERPETUAL": 100,
+		}
+		simulatePortfolioResponse, err := apiClient.Positions.GetSimulateMargins(
+			"USDC",
+			true,
+			simulatedPositions,
+		)
+		if err != nil {
+			// Handle the error
+			log.Fatalf("failed [GetSimulateMargins] API: %+v", err)
+		}
+
+		fmt.Printf("Success [GetSimulateMargins] API: %+v", simulatePortfolioResponse)
+		// Access the simulated portfolio margin information from the simulatePortfolioResponse.Result field
+		// fmt.Println("Projected Margin:", simulatePortfolioResponse.Result.ProjectedMargin)
+		// fmt.Println("Margin:", simulatePortfolioResponse.Result.Margin)
+
+		fmt.Println(" ")
+		fmt.Println(" ")
+
+		// ## ------- [GetSimulateMargins] ----
+		closePositionResponse, err := apiClient.Positions.ClosePosition(
+			"SOL_USDC-PERPETUAL",
+			"market",
+			140,
+		)
+		if err != nil {
+			// Handle the error
+			log.Fatalf("failed [ClosePosition] API: %+v", err)
+		}
+
+		fmt.Println("ClosePosition: ")
+		fmt.Println("Order ID:", closePositionResponse.Result.Order.OrderID)
+		fmt.Println("Trades:")
+		for _, trade := range closePositionResponse.Result.Trades {
+			fmt.Println("  - Trade ID:", trade.TradeID)
+			fmt.Println("    Price:", trade.Price)
+			fmt.Println("    Direction:", trade.Direction)
+			// Access other trade details as needed
+		}
+	}
 
 	// ## ------ Websocket Testing and usage --------------
 	if isUsePrivateWebSocket {
@@ -1261,10 +1395,10 @@ func main() {
 			"deribit_price_index.btc_usdc",      // ## Index price
 			"deribit_volatility_index.btc_usdc", // ## Volatility Index
 			"deribit_price_statistics.btc_usdc", // ## Volatility Index
-			"ticker.BTC_USDC.100ms",             // ## Ticker of btc_usdc pairs [raw/100ms]
+			"ticker.BTC_USDC.100ms",             // ## Ticker of btc_usdc pairs [raw/100ms] (raw not for public channel)
 			"chart.trades.BTC_USDC.1",           // ## OHLCV of chart data [1/3/60 -> in minutes except 1D = 1 day]
 			"quote.BTC_USDC",                    // ## Quote of btc_usdc pairs [raw/100ms]
-			"perpetual.BTC-PERPETUAL.100ms",     // ## Perpetual of BTC-PERPETUAL pairs [raw/100ms]
+			"perpetual.BTC-PERPETUAL.100ms",     // ## Perpetual of BTC-PERPETUAL pairs [raw/100ms]  (raw not for public channel)
 			"markprice.options.btc_usdc",        // ## Options Market price by pairs of SPOT
 		)
 		if err != nil {

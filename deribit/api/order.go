@@ -22,6 +22,7 @@ const (
 	urlPathGetOrderHistoryByCurrency   = "/private/get_order_history_by_currency"
 	urlPathGetOrderHistoryByInstrument = "/private/get_order_history_by_instrument"
 	urlPathGetTriggerOrderHistory      = "/private/get_trigger_order_history"
+	urlPathGetMargins                  = "/private/get_margins"
 )
 
 type OTOCOConfig struct {
@@ -124,7 +125,7 @@ type OrderResultTradeResponse struct {
 	Advanced        string                     `json:"advanced,omitempty"`
 	OrderID         string                     `json:"order_id"`
 	Liquidity       string                     `json:"liquidity"`
-	PostOnly        string                     `json:"post_only"`
+	PostOnly        bool                       `json:"post_only"`
 	Direction       string                     `json:"direction"`
 	Contracts       float64                    `json:"contracts,omitempty"`
 	MMP             bool                       `json:"mmp"`
@@ -146,7 +147,7 @@ type OrderResultTradeResponse struct {
 	MarkPrice       float64                    `json:"mark_price"`
 	BlockRFQID      int                        `json:"block_rfq_id,omitempty"`
 	ComboTradeID    int                        `json:"combo_trade_id,omitempty"`
-	ReduceOnly      string                     `json:"reduce_only"`
+	ReduceOnly      bool                       `json:"reduce_only"`
 	Amount          float64                    `json:"amount"`
 	Liquidation     string                     `json:"liquidation,omitempty"`
 	TradeSeq        int                        `json:"trade_seq"`
@@ -832,6 +833,43 @@ func (s *OrderService) GetTriggerOrderHistory(
 	if continuation != "" {
 		uri += fmt.Sprintf("&continuation=%s", continuation)
 	}
+
+	err := s.client.DoPrivate(uri, "GET", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+type MarginResult struct {
+	Buy      float64 `json:"buy"`
+	MaxPrice float64 `json:"max_price"`
+	MinPrice float64 `json:"min_price"`
+	Sell     float64 `json:"sell"`
+}
+
+type GetMarginsResponse struct {
+	ID      uint64       `json:"id"`
+	JSONRPC string       `json:"jsonrpc"`
+	Result  MarginResult `json:"result"`
+}
+
+// ## Get Margins
+func (s *OrderService) GetMargins(
+	instrumentName string,
+	amount float64,
+	price float64,
+) (*GetMarginsResponse, error) {
+	var resp GetMarginsResponse
+	uri := fmt.Sprintf(
+		"%s%s%s?instrument_name=%s&amount=%f&price=%f",
+		s.client.baseURL,
+		defaultAPIURL,
+		urlPathGetMargins,
+		instrumentName,
+		amount,
+		price,
+	)
 
 	err := s.client.DoPrivate(uri, "GET", nil, &resp)
 	if err != nil {

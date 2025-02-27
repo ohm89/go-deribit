@@ -1,3 +1,8 @@
+# 1.0.0 
+
+- [NEW-FEATURE] api/position.go to get Positions value of future position
+
+
 # 0.3.1 
 
 - [NEW-FEATURE] ws/client.go add PrivateSubscribe, PrivateUnsubscribe, PrivateUnsubscribeAll, Unsubscribe, UnsubscribeAll function to use
