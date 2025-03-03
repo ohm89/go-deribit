@@ -1,3 +1,8 @@
+# 1.1.0 
+
+- [NEW-FEATURE] ws/client.go add Received function to read data and send out 
+
+
 # 1.0.0 
 
 - [NEW-FEATURE] api/position.go to get Positions value of future position

@@ -423,3 +423,43 @@ func (c *DeribitClient) Run() {
 		}
 	}
 }
+
+// ## ----------------- Event --------------
+
+type WebSocketResponse struct {
+	JSONRPC string          `json:"jsonrpc"`
+	Method  string          `json:"method"`
+	Params  json.RawMessage `json:"params"`
+}
+
+type ChannelInfo struct {
+	Channel string          `json:"channel"`
+	Data    json.RawMessage `json:"data"`
+}
+
+func (c *DeribitClient) Receive() (*WebSocketResponse, error) {
+	// Read a message from the WebSocket connection
+	_, message, err := c.conn.ReadMessage()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read message: %w", err)
+	}
+
+	// Parse the base WebSocket response
+	var wsResponse WebSocketResponse
+	if err := json.Unmarshal(message, &wsResponse); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal WebSocket response: %w", err)
+	}
+
+	// If the response is not a subscription, return as is
+	if wsResponse.Method != "subscription" {
+		return &wsResponse, nil
+	}
+
+	// Extract channel information
+	var channelInfo ChannelInfo
+	if err := json.Unmarshal(wsResponse.Params, &channelInfo); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal channel info: %w", err)
+	}
+
+	return &wsResponse, nil
+}

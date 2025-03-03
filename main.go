@@ -39,12 +39,12 @@ func main() {
 
 	fmt.Printf("\n\n********* Start Program %s *********** \n\n", config.NAME)
 
-	isUsePrivateWebSocket := false
+	isUsePrivateWebSocket := true
 	isUseOrderAPI := false
 	isUseMarketAPI := false
 
 	isUsePublicWebSocket := false
-	isUsePositionAPI := true
+	isUsePositionAPI := false
 
 	// ## ------ Websocket Testing and usage --------------
 	if isUsePositionAPI {
@@ -247,12 +247,14 @@ func main() {
 
 		// ## Subscribe to multiple channels
 		err := privateClient.PrivateSubscribe(
-			"deribit_price_index.sol_usdc", // public market index price data
-			"trades.sol_usdc.raw",          // Trade Signal from our account
-			"ticker.SOL_USDC.raw",          // ## Ticker of btc_usdc pairs [raw/100ms]
-			"chart.trades.SOL_USDC.1",      // ## OHLCV of chart data [1/3/60 -> in minutes except 1D = 1 day]
-			"quote.SOL_USDC",               // ## Quote of btc_usdc pairs [raw/100ms]
-			"perpetual.SOL-PERPETUAL.raw",  // ## Perpetual of BTC-PERPETUAL pairs [raw/100ms
+			// "deribit_price_index.sol_usdc", // public market index price data
+			// "trades.sol_usdc.raw",          // Trade Signal from our account
+			// "ticker.SOL_USDC.raw",          // ## Ticker of btc_usdc pairs [raw/100ms]
+			// "chart.trades.SOL_USDC.1",      // ## OHLCV of chart data [1/3/60 -> in minutes except 1D = 1 day]
+			// "quote.SOL_USDC",               // ## Quote of btc_usdc pairs [raw/100ms]
+			// "perpetual.SOL-PERPETUAL.raw",  // ## Perpetual of BTC-PERPETUAL pairs [raw/100ms
+
+			"trades.btc_usdc.raw",
 		)
 		if err != nil {
 			privateClient.Close()
@@ -266,22 +268,22 @@ func main() {
 		// 	log.Fatalf("failed to PrivateUnsubscribeAll : %v", err)
 		// }
 
-		// ## -------------- Test Create Buy Order 2 ---------------------
+		// // ## -------------- Test Create Buy Order 2 ---------------------
 
-		// ## Create a new buy order request
-		orderRequest := &ws.OrderRequest{
-			InstrumentName: "SOL_USDC",
-			Amount:         1,
-			Price:          10,
-			Type:           "limit",
-			Label:          "limit0000243",
-		}
+		// // ## Create a new buy order request
+		// orderRequest := &ws.OrderRequest{
+		// 	InstrumentName: "SOL_USDC",
+		// 	Amount:         1,
+		// 	Price:          10,
+		// 	Type:           "limit",
+		// 	Label:          "limit0000243",
+		// }
 
-		errPrivate = ws.CreateBuyOrder(privateClient, orderRequest)
-		if errPrivate != nil {
-			privateClient.Close()
-			log.Fatalf("failed to create buy order: %v", errPrivate)
-		}
+		// errPrivate = ws.CreateBuyOrder(privateClient, orderRequest)
+		// if errPrivate != nil {
+		// 	privateClient.Close()
+		// 	log.Fatalf("failed to create buy order: %v", errPrivate)
+		// }
 
 		// ## -------------- Test Create Buy Order ---------------------
 		// // ## Create a new buy order request
