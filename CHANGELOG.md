@@ -1,3 +1,7 @@
+# 1.1.1 
+
+- [BUG] ws/client.go add heartbeat management also in Receive function
+
 # 1.1.0 
 
 - [NEW-FEATURE] ws/client.go add Received function to read data and send out 

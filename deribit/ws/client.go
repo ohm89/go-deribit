@@ -450,9 +450,13 @@ func (c *DeribitClient) Receive() (*WebSocketResponse, error) {
 		return nil, fmt.Errorf("failed to unmarshal WebSocket response: %w", err)
 	}
 
-	// If the response is not a subscription, return as is
+	// If the response is not a subscription, check is heartbeat, if not return as is
 	if wsResponse.Method != "subscription" {
-		return &wsResponse, nil
+		if wsResponse.Method == "heartbeat" {
+			c.handleHeartbeat()
+		} else {
+			return &wsResponse, nil
+		}
 	}
 
 	// Extract channel information
