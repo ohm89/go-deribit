@@ -1,3 +1,8 @@
+# 1.2.2 
+
+- [NEW] api/client.go add Debug message on do request error
+
+
 # 1.2.1 
 
 - [NEW] ws/auth.go add Refresh auth for refresh token every 1 hour

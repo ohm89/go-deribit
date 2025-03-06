@@ -145,7 +145,9 @@ func (c *Client) do(uri string, method string, in, out interface{}, isPrivate bo
 		} else {
 			// ## [DEBUG]
 			fmt.Printf("-- do Request Error !! -- \n")
-			fmt.Printf("Error body: %#v \n\n", string(resp.Body()))
+			fmt.Printf("Error Request URL: %#v \n\n", string(req.RequestURI()))
+			fmt.Printf("Error Request Body: %#v \n\n", string(req.Body()))
+			fmt.Printf("Error Response body: %#v \n\n", string(resp.Body()))
 
 			// Handle the error response
 			return fmt.Errorf("request failed with status code %d", resp.StatusCode())
