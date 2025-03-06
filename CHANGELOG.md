@@ -1,3 +1,7 @@
+# 1.2.1 
+
+- [NEW] ws/auth.go add Refresh auth for refresh token every 1 hour
+
 # 1.1.1 
 
 - [BUG] ws/client.go add heartbeat management also in Receive function

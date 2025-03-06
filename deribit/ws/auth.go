@@ -94,3 +94,57 @@ func Authenticate(c *DeribitClient) (*AuthResponse, error) {
 
 	return &authResponse, nil
 }
+
+func RefreshAuth(c *DeribitClient) (*AuthResponse, error) {
+
+	authRequest := &AuthRequest{
+		GrantType:    "refresh_token",
+		RefreshToken: c.refreshToken,
+	}
+
+	msg := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "public/auth",
+		"params":  authRequest,
+	}
+
+	jsonMsg, err := json.Marshal(msg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal authentication message: %w", err)
+	}
+
+	err = c.conn.WriteMessage(websocket.TextMessage, jsonMsg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send authentication message: %w", err)
+	}
+
+	_, message, err := c.conn.ReadMessage()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read authentication response: %w", err)
+	}
+
+	log.Printf("Received authentication response: %s \n\n", message)
+
+	// Parse the authentication response and save the access_token
+	var authResponse AuthResponse
+	err = json.Unmarshal(message, &authResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal authentication response: %w", err)
+	}
+
+	result := authResponse.Result
+
+	accessToken := result.AccessToken
+	refreshToken := result.RefreshToken
+
+	c.accessToken = accessToken
+	c.refreshToken = refreshToken
+
+	c.isPrivate = true
+
+	// ## [DEBUG]
+	// fmt.Printf("\n\n Access Token: %s \n\n", c.accessToken)
+	// fmt.Printf("\n\n Refresh Token: %s \n\n", c.refreshToken)
+
+	return &authResponse, nil
+}
