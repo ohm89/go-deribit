@@ -150,7 +150,13 @@ func (c *Client) do(uri string, method string, in, out interface{}, isPrivate bo
 			fmt.Printf("Error Response body: %#v \n\n", string(resp.Body()))
 
 			// Handle the error response
-			return fmt.Errorf("request failed with status code %d", resp.StatusCode())
+			return fmt.Errorf(
+				"request URI: %s \n request Body: %s \n\n Request failed with status code: %d \n Response body: %s",
+				string(req.RequestURI()),
+				string(req.Body()),
+				resp.StatusCode(),
+				string(resp.Body()),
+			)
 		}
 	}
 

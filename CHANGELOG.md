@@ -1,3 +1,8 @@
+# 1.2.3 
+
+- [CHANGE] api/client.go add Debug message on do request error when send out also
+
+
 # 1.2.2 
 
 - [NEW] api/client.go add Debug message on do request error
