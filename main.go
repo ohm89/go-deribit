@@ -39,8 +39,8 @@ func main() {
 
 	fmt.Printf("\n\n********* Start Program %s *********** \n\n", config.NAME)
 
-	isUsePrivateWebSocket := true
-	isUseOrderAPI := false
+	isUsePrivateWebSocket := false
+	isUseOrderAPI := true
 	isUseMarketAPI := false
 
 	isUsePublicWebSocket := false
@@ -438,13 +438,12 @@ func main() {
 			config.CLIENT_SECRET,
 		)
 
-		// ## ------- Test [Buy] Order ----------
-		orderBuyResponse, err := apiClient.Orders.Buy(
-			"BTC_USDC",
-			0.0001,
+		orderBuyResponse11, err := apiClient.Orders.PostBuy(
+			"BTC_USDC-PERPETUAL",
+			0.001,
 			0,
 			"limit",
-			"my-btc-usdc-order",
+			"my-btc-usdc-perp-order",
 			18000.0,
 			"good_til_cancelled",
 			0,
@@ -465,32 +464,17 @@ func main() {
 			log.Fatalf("failed [Buy] API: %+v", err)
 		}
 
-		fmt.Println("[1] Buy Resp: ")
-		fmt.Printf("%#v", orderBuyResponse)
+		fmt.Println("[12] Sell Resp: ")
+		fmt.Printf("%#v", orderBuyResponse11)
 		fmt.Printf("\n\n")
 
-		// ## ------- Test [CancelOneOrder] Order ----------
-		if orderBuyResponse.Result.Order.OrderID != "" {
-			orderCancelOneOrderResponse, err := apiClient.Orders.Cancel(
-				orderBuyResponse.Result.Order.OrderID,
-			)
-			if err != nil {
-				log.Fatalf("failed [Cancel] API: %+v", err)
-			}
-
-			fmt.Println("[3] Cancel Resp: ")
-			fmt.Printf("%#v", orderCancelOneOrderResponse)
-			fmt.Printf("\n\n")
-		}
-
-		// ## ------- Test [Buy] Order 2 ----------
-		orderBuyResponse2, err := apiClient.Orders.Buy(
-			"BTC_USDC",
-			0.0001,
+		orderResponse12, err := apiClient.Orders.PostSell(
+			"BTC_USDC-PERPETUAL",
+			0.001,
 			0,
 			"limit",
-			"my-btc-usdc-order",
-			19000.0,
+			"my-btc-usdc-perp-sell-order",
+			180000.0,
 			"good_til_cancelled",
 			0,
 			false,
@@ -507,62 +491,186 @@ func main() {
 			nil,
 		)
 		if err != nil {
-			log.Fatalf("failed [Buy] API 2: %+v", err)
+			log.Fatalf("failed [Sell] API: %+v", err)
 		}
 
-		fmt.Println("[1] Buy Resp2: ")
-		fmt.Printf("%#v", orderBuyResponse2)
+		fmt.Println("[12] Sell Resp: ")
+		fmt.Printf("%#v", orderResponse12)
 		fmt.Printf("\n\n")
 
-		// ## ------- Test [CancelAll] Order ----------
+		// // ## ------- Test [Buy] Order ----------
+		// orderBuyResponse, err := apiClient.Orders.Buy(
+		// 	"BTC_USDC",
+		// 	0.0001,
+		// 	0,
+		// 	"limit",
+		// 	"my-btc-usdc-order",
+		// 	18000.0,
+		// 	"good_til_cancelled",
+		// 	0,
+		// 	false,
+		// 	false,
+		// 	false,
+		// 	0,
+		// 	0,
+		// 	"",
+		// 	"",
+		// 	false,
+		// 	0,
+		// 	"",
+		// 	"",
+		// 	nil,
+		// )
+		// if err != nil {
+		// 	log.Fatalf("failed [Buy] API: %+v", err)
+		// }
 
-		orderCancelAllOrderResponse, err := apiClient.Orders.CancelAll()
-		if err != nil {
-			log.Fatalf("failed [CancelAll] API: %+v", err)
-		}
+		// fmt.Println("[1] Buy Resp: ")
+		// fmt.Printf("%#v", orderBuyResponse)
+		// fmt.Printf("\n\n")
 
-		fmt.Println("[4] CancelAll Resp: ")
-		fmt.Printf("%#v", orderCancelAllOrderResponse)
-		fmt.Printf("\n\n")
+		// // ## ------- Test [CancelOneOrder] Order ----------
+		// if orderBuyResponse.Result.Order.OrderID != "" {
+		// 	orderCancelOneOrderResponse, err := apiClient.Orders.Cancel(
+		// 		orderBuyResponse.Result.Order.OrderID,
+		// 	)
+		// 	if err != nil {
+		// 		log.Fatalf("failed [Cancel] API: %+v", err)
+		// 	}
 
-		// ## ------- Test [Buy] Order 3 ----------
-		orderBuyResponse3, err := apiClient.Orders.Buy(
-			"BTC_USDC",
-			0.0001,
-			0,
-			"limit",
-			"my-btc-usdc-order",
-			20000.0,
-			"good_til_cancelled",
-			0,
-			false,
-			false,
-			false,
-			0,
-			0,
-			"",
-			"",
-			false,
-			0,
-			"",
-			"",
-			nil,
-		)
-		if err != nil {
-			log.Fatalf("failed [Buy] API 2: %+v", err)
-		}
+		// 	fmt.Println("[3] Cancel Resp: ")
+		// 	fmt.Printf("%#v", orderCancelOneOrderResponse)
+		// 	fmt.Printf("\n\n")
+		// }
 
-		fmt.Println("[33] Buy Resp3: ")
-		fmt.Printf("%#v", orderBuyResponse3)
-		fmt.Printf("\n\n")
+		// // ## ------- Test [Buy] Order 2 ----------
+		// orderBuyResponse2, err := apiClient.Orders.Buy(
+		// 	"BTC_USDC",
+		// 	0.0001,
+		// 	0,
+		// 	"limit",
+		// 	"my-btc-usdc-order",
+		// 	19000.0,
+		// 	"good_til_cancelled",
+		// 	0,
+		// 	false,
+		// 	false,
+		// 	false,
+		// 	0,
+		// 	0,
+		// 	"",
+		// 	"",
+		// 	false,
+		// 	0,
+		// 	"",
+		// 	"",
+		// 	nil,
+		// )
+		// if err != nil {
+		// 	log.Fatalf("failed [Buy] API 2: %+v", err)
+		// }
 
-		// ## ------- Test [Buy] Order 4 ----------
-		// orderBuyResponse4, err := apiClient.Orders.Buy(
+		// fmt.Println("[1] Buy Resp2: ")
+		// fmt.Printf("%#v", orderBuyResponse2)
+		// fmt.Printf("\n\n")
+
+		// // ## ------- Test [CancelAll] Order ----------
+
+		// orderCancelAllOrderResponse, err := apiClient.Orders.CancelAll()
+		// if err != nil {
+		// 	log.Fatalf("failed [CancelAll] API: %+v", err)
+		// }
+
+		// fmt.Println("[4] CancelAll Resp: ")
+		// fmt.Printf("%#v", orderCancelAllOrderResponse)
+		// fmt.Printf("\n\n")
+
+		// // ## ------- Test [Buy] Order 3 ----------
+		// orderBuyResponse3, err := apiClient.Orders.Buy(
+		// 	"BTC_USDC",
+		// 	0.0001,
+		// 	0,
+		// 	"limit",
+		// 	"my-btc-usdc-order",
+		// 	20000.0,
+		// 	"good_til_cancelled",
+		// 	0,
+		// 	false,
+		// 	false,
+		// 	false,
+		// 	0,
+		// 	0,
+		// 	"",
+		// 	"",
+		// 	false,
+		// 	0,
+		// 	"",
+		// 	"",
+		// 	nil,
+		// )
+		// if err != nil {
+		// 	log.Fatalf("failed [Buy] API 2: %+v", err)
+		// }
+
+		// fmt.Println("[33] Buy Resp3: ")
+		// fmt.Printf("%#v", orderBuyResponse3)
+		// fmt.Printf("\n\n")
+
+		// // ## ------- Test [Buy] Order 4 ----------
+		// // orderBuyResponse4, err := apiClient.Orders.Buy(
+		// // 	"SOL_USDC",
+		// // 	1,
+		// // 	0,
+		// // 	"limit",
+		// // 	"my-btc-usdc-order",
+		// // 	10.0,
+		// // 	"good_til_cancelled",
+		// // 	0,
+		// // 	false,
+		// // 	false,
+		// // 	false,
+		// // 	0,
+		// // 	0,
+		// // 	"",
+		// // 	"",
+		// // 	false,
+		// // 	0,
+		// // 	"",
+		// // 	"",
+		// // 	nil,
+		// // )
+		// // if err != nil {
+		// // 	log.Fatalf("failed [Buy] API 4: %+v", err)
+		// // }
+
+		// // fmt.Println("[1] Buy Resp4: ")
+		// // fmt.Printf("%#v", orderBuyResponse4)
+		// // fmt.Printf("\n\n")
+
+		// // ## ------- Test [CancelByInstrument] Order ----------
+
+		// orderCancelByInstrumentResponse, err := apiClient.Orders.CancelAllByInstrument(
+		// 	"BTC_USDC",
+		// 	"all",
+		// 	false,
+		// 	false,
+		// 	false,
+		// )
+		// if err != nil {
+		// 	log.Fatalf("failed [CancelByInstrument] API: %+v", err)
+		// }
+
+		// fmt.Println("[55] CancelByInstrument Resp: ")
+		// fmt.Printf("%#v", orderCancelByInstrumentResponse)
+		// fmt.Printf("\n\n")
+
+		// // ## ------- Test [Buy] Order 6 ----------
+		// orderBuyResponse6, err := apiClient.Orders.Buy(
 		// 	"SOL_USDC",
 		// 	1,
 		// 	0,
 		// 	"limit",
-		// 	"my-btc-usdc-order",
+		// 	"my-sol-6-usdc-orde-001",
 		// 	10.0,
 		// 	"good_til_cancelled",
 		// 	0,
@@ -580,179 +688,131 @@ func main() {
 		// 	nil,
 		// )
 		// if err != nil {
-		// 	log.Fatalf("failed [Buy] API 4: %+v", err)
+		// 	log.Fatalf("failed [Buy] API 6: %+v", err)
 		// }
 
-		// fmt.Println("[1] Buy Resp4: ")
-		// fmt.Printf("%#v", orderBuyResponse4)
+		// fmt.Println("[1] Buy Resp6: ")
+		// fmt.Printf("%#v", orderBuyResponse6)
 		// fmt.Printf("\n\n")
 
-		// ## ------- Test [CancelByInstrument] Order ----------
+		// // ## ------- Test [GetOrderState] Order 6 ----------
+		// if orderBuyResponse6.Result.Order.OrderID != "" {
+		// 	orderState6, err := apiClient.Orders.GetOrderState(
+		// 		orderBuyResponse6.Result.Order.OrderID,
+		// 	)
+		// 	if err != nil {
+		// 		log.Fatalf("failed [GetOrderState] API: %+v", err)
+		// 	}
 
-		orderCancelByInstrumentResponse, err := apiClient.Orders.CancelAllByInstrument(
-			"BTC_USDC",
-			"all",
-			false,
-			false,
-			false,
-		)
-		if err != nil {
-			log.Fatalf("failed [CancelByInstrument] API: %+v", err)
-		}
+		// 	fmt.Println("[66] GetOrderState Resp: ")
+		// 	fmt.Printf("%#v", orderState6)
+		// 	fmt.Printf("\n\n")
+		// }
 
-		fmt.Println("[55] CancelByInstrument Resp: ")
-		fmt.Printf("%#v", orderCancelByInstrumentResponse)
-		fmt.Printf("\n\n")
+		// // ## ------- Test [GetOrderStateByLabel] Order 6 ----------
+		// if orderBuyResponse6.Result.Order.OrderID != "" {
+		// 	orderState67, err := apiClient.Orders.GetOrderStateByLabel(
+		// 		"USDC",
+		// 		orderBuyResponse6.Result.Order.Label,
+		// 	)
+		// 	if err != nil {
+		// 		log.Fatalf("failed [GetOrderStateByLabel] API: %+v", err)
+		// 	}
 
-		// ## ------- Test [Buy] Order 6 ----------
-		orderBuyResponse6, err := apiClient.Orders.Buy(
-			"SOL_USDC",
-			1,
-			0,
-			"limit",
-			"my-sol-6-usdc-orde-001",
-			10.0,
-			"good_til_cancelled",
-			0,
-			false,
-			false,
-			false,
-			0,
-			0,
-			"",
-			"",
-			false,
-			0,
-			"",
-			"",
-			nil,
-		)
-		if err != nil {
-			log.Fatalf("failed [Buy] API 6: %+v", err)
-		}
+		// 	fmt.Println("[67] GetOrderStateByLabel Resp: ")
+		// 	fmt.Printf("%#v", orderState67)
+		// 	fmt.Printf("\n\n")
+		// }
 
-		fmt.Println("[1] Buy Resp6: ")
-		fmt.Printf("%#v", orderBuyResponse6)
-		fmt.Printf("\n\n")
+		// // ## ------- Test [GetOpenOrders] Order 6 ----------
 
-		// ## ------- Test [GetOrderState] Order 6 ----------
-		if orderBuyResponse6.Result.Order.OrderID != "" {
-			orderState6, err := apiClient.Orders.GetOrderState(
-				orderBuyResponse6.Result.Order.OrderID,
-			)
-			if err != nil {
-				log.Fatalf("failed [GetOrderState] API: %+v", err)
-			}
+		// openSpotOrderList, err := apiClient.Orders.GetOpenOrders(
+		// 	"spot",
+		// 	"all",
+		// )
+		// if err != nil {
+		// 	log.Fatalf("failed [GetOpenOrders] API: %+v", err)
+		// }
 
-			fmt.Println("[66] GetOrderState Resp: ")
-			fmt.Printf("%#v", orderState6)
-			fmt.Printf("\n\n")
-		}
+		// fmt.Println("[68] GetOpenOrders Resp: ")
+		// fmt.Printf("%#v", openSpotOrderList)
+		// fmt.Printf("\n\n")
 
-		// ## ------- Test [GetOrderStateByLabel] Order 6 ----------
-		if orderBuyResponse6.Result.Order.OrderID != "" {
-			orderState67, err := apiClient.Orders.GetOrderStateByLabel(
-				"USDC",
-				orderBuyResponse6.Result.Order.Label,
-			)
-			if err != nil {
-				log.Fatalf("failed [GetOrderStateByLabel] API: %+v", err)
-			}
+		// // ## ------- Test [GetOpenOrdersByInstrument] Order 6 ----------
 
-			fmt.Println("[67] GetOrderStateByLabel Resp: ")
-			fmt.Printf("%#v", orderState67)
-			fmt.Printf("\n\n")
-		}
+		// openSpotOrderList2, err := apiClient.Orders.GetOpenOrdersByInstrument(
+		// 	"SOL_USDC",
+		// 	"all",
+		// )
+		// if err != nil {
+		// 	log.Fatalf("failed [GetOpenOrdersByInstrument] API: %+v", err)
+		// }
 
-		// ## ------- Test [GetOpenOrders] Order 6 ----------
+		// fmt.Println("[68] GetOpenOrdersByInstrument Resp: ")
+		// fmt.Printf("%#v", openSpotOrderList2)
+		// fmt.Printf("\n\n")
 
-		openSpotOrderList, err := apiClient.Orders.GetOpenOrders(
-			"spot",
-			"all",
-		)
-		if err != nil {
-			log.Fatalf("failed [GetOpenOrders] API: %+v", err)
-		}
+		// // ## ------- Test [GetOrderHistoryByCurrency] Order 6 ----------
 
-		fmt.Println("[68] GetOpenOrders Resp: ")
-		fmt.Printf("%#v", openSpotOrderList)
-		fmt.Printf("\n\n")
+		// orderHistoryList1, err := apiClient.Orders.GetOrderHistoryByCurrency(
+		// 	"USDC",
+		// 	"spot",
+		// 	20,
+		// 	0,
+		// 	false,
+		// 	false,
+		// )
+		// if err != nil {
+		// 	log.Fatalf("failed [GetOrderHistoryByCurrency] API: %+v", err)
+		// }
 
-		// ## ------- Test [GetOpenOrdersByInstrument] Order 6 ----------
+		// fmt.Println("[68] GetOrderHistoryByCurrency Resp: ")
+		// fmt.Printf("%#v", orderHistoryList1)
+		// fmt.Printf("\n\n")
 
-		openSpotOrderList2, err := apiClient.Orders.GetOpenOrdersByInstrument(
-			"SOL_USDC",
-			"all",
-		)
-		if err != nil {
-			log.Fatalf("failed [GetOpenOrdersByInstrument] API: %+v", err)
-		}
+		// // ## ------- Test [GetOrderHistoryByInstrument] Order 6 ----------
 
-		fmt.Println("[68] GetOpenOrdersByInstrument Resp: ")
-		fmt.Printf("%#v", openSpotOrderList2)
-		fmt.Printf("\n\n")
+		// orderHistoryList2, err := apiClient.Orders.GetOrderHistoryByInstrument(
+		// 	"SOL_USDC",
+		// 	20,
+		// 	0,
+		// 	false,
+		// 	true,
+		// )
+		// if err != nil {
+		// 	log.Fatalf("failed [GetOrderHistoryByInstrument] API: %+v", err)
+		// }
 
-		// ## ------- Test [GetOrderHistoryByCurrency] Order 6 ----------
+		// fmt.Println("[69] GetOrderHistoryByInstrument Resp: ")
+		// fmt.Printf("%#v", orderHistoryList2)
+		// fmt.Printf("\n\n")
 
-		orderHistoryList1, err := apiClient.Orders.GetOrderHistoryByCurrency(
-			"USDC",
-			"spot",
-			20,
-			0,
-			false,
-			false,
-		)
-		if err != nil {
-			log.Fatalf("failed [GetOrderHistoryByCurrency] API: %+v", err)
-		}
+		// // ## ------- Test [GetTriggerOrderHistory] Order 6 ----------
 
-		fmt.Println("[68] GetOrderHistoryByCurrency Resp: ")
-		fmt.Printf("%#v", orderHistoryList1)
-		fmt.Printf("\n\n")
+		// triggerOrderHistoryList1, err := apiClient.Orders.GetTriggerOrderHistory(
+		// 	"USDC",
+		// 	"",
+		// 	20,
+		// 	"",
+		// )
+		// if err != nil {
+		// 	log.Fatalf("failed [GetTriggerOrderHistory] API: %+v", err)
+		// }
 
-		// ## ------- Test [GetOrderHistoryByInstrument] Order 6 ----------
+		// fmt.Println("[70] GetTriggerOrderHistory Resp: ")
+		// fmt.Printf("%#v", triggerOrderHistoryList1)
+		// fmt.Printf("\n\n")
 
-		orderHistoryList2, err := apiClient.Orders.GetOrderHistoryByInstrument(
-			"SOL_USDC",
-			20,
-			0,
-			false,
-			true,
-		)
-		if err != nil {
-			log.Fatalf("failed [GetOrderHistoryByInstrument] API: %+v", err)
-		}
+		// // ## ------- Test [CancelAll] Order ----------
 
-		fmt.Println("[69] GetOrderHistoryByInstrument Resp: ")
-		fmt.Printf("%#v", orderHistoryList2)
-		fmt.Printf("\n\n")
+		// orderCancelAllLast, err := apiClient.Orders.CancelAll()
+		// if err != nil {
+		// 	log.Fatalf("failed [CancelAll] API: %+v", err)
+		// }
 
-		// ## ------- Test [GetTriggerOrderHistory] Order 6 ----------
-
-		triggerOrderHistoryList1, err := apiClient.Orders.GetTriggerOrderHistory(
-			"USDC",
-			"",
-			20,
-			"",
-		)
-		if err != nil {
-			log.Fatalf("failed [GetTriggerOrderHistory] API: %+v", err)
-		}
-
-		fmt.Println("[70] GetTriggerOrderHistory Resp: ")
-		fmt.Printf("%#v", triggerOrderHistoryList1)
-		fmt.Printf("\n\n")
-
-		// ## ------- Test [CancelAll] Order ----------
-
-		orderCancelAllLast, err := apiClient.Orders.CancelAll()
-		if err != nil {
-			log.Fatalf("failed [CancelAll] API: %+v", err)
-		}
-
-		fmt.Println("[9999] CancelAll Resp: ")
-		fmt.Printf("%#v", orderCancelAllLast)
-		fmt.Printf("\n\n")
+		// fmt.Println("[9999] CancelAll Resp: ")
+		// fmt.Printf("%#v", orderCancelAllLast)
+		// fmt.Printf("\n\n")
 
 		// ## ------- Test [Sell] Order ----------
 		// orderResponse2, err := apiClient.Orders.Sell(

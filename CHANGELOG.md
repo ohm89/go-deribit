@@ -1,3 +1,7 @@
+# 1.2.5 
+
+- [BUG] api/order.go fix PostBuy and PostSell to add correct body request
+
 # 1.2.4 
 
 - [NEW] api/order.go add PostBuy and PostSell to library to use POST insted of GET Method in some case like OTO conditional

@@ -40,6 +40,13 @@ type OTOCOConfig struct {
 	Trigger        string  `json:"trigger,omitempty"`
 }
 
+type OrderRequestBody struct {
+	ID      int          `json:"id,omitempty"`
+	Method  string       `json:"method"`
+	JSONRPC string       `json:"jsonrpc"`
+	Params  OrderRequest `json:"params"`
+}
+
 type OrderRequest struct {
 	InstrumentName       string        `json:"instrument_name"`
 	Amount               float64       `json:"amount,omitempty"`
@@ -492,7 +499,13 @@ func (s *OrderService) PostBuy(
 		OTOCOConfig:          otocoConfig,
 	}
 
-	err := s.client.DoPrivate(uri, "POST", orderRequest, &resp)
+	orderRequestBody := OrderRequestBody{
+		Method:  strings.TrimPrefix(urlPathBuy, "/"),
+		JSONRPC: "2.0",
+		Params:  orderRequest,
+	}
+
+	err := s.client.DoPrivate(uri, "POST", orderRequestBody, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -686,7 +699,13 @@ func (s *OrderService) PostSell(
 		OTOCOConfig:          otocoConfig,
 	}
 
-	err := s.client.DoPrivate(uri, "POST", orderRequest, &resp)
+	orderRequestBody := OrderRequestBody{
+		Method:  strings.TrimPrefix(urlPathSell, "/"),
+		JSONRPC: "2.0",
+		Params:  orderRequest,
+	}
+
+	err := s.client.DoPrivate(uri, "POST", orderRequestBody, &resp)
 	if err != nil {
 		return nil, err
 	}

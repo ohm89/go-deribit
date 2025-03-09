@@ -94,9 +94,15 @@ func (c *Client) do(uri string, method string, in, out interface{}, isPrivate bo
 
 	if in != nil {
 		req.Header.SetContentType("application/json")
-		if err := json.NewEncoder(req.BodyWriter()).Encode(in); err != nil {
+		// if err := json.NewEncoder(req.BodyWriter()).Encode(in); err != nil {
+		// 	return err
+		// }
+
+		jsonData, err := json.Marshal(in)
+		if err != nil {
 			return err
 		}
+		req.SetBody(jsonData)
 	}
 
 	if isPrivate {
