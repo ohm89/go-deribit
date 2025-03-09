@@ -1,3 +1,7 @@
+# 1.2.4 
+
+- [NEW] api/order.go add PostBuy and PostSell to library to use POST insted of GET Method in some case like OTO conditional
+
 # 1.2.3 
 
 - [CHANGE] api/client.go add Debug message on do request error when send out also

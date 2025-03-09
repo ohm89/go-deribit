@@ -443,6 +443,62 @@ func (s *OrderService) Buy(
 	return &resp, nil
 }
 
+// ## Create PostBuy Order
+func (s *OrderService) PostBuy(
+	instrumentName string,
+	amount float64,
+	contracts int64,
+	orderType string,
+	label string,
+	price float64,
+	timeInForce string,
+	maxShow int64,
+	postOnly bool,
+	rejectPostOnly bool,
+	reduceOnly bool,
+	triggerPrice float64,
+	triggerOffset float64,
+	trigger string,
+	advanced string,
+	mmp bool,
+	validUntil int64,
+	linkedOrderType string,
+	triggerFillCondition string,
+	otocoConfig []OTOCOConfig,
+) (*OrderResponse, error) {
+	var resp OrderResponse
+	uri := fmt.Sprintf("%s%s%s", s.client.baseURL, defaultAPIURL, urlPathBuy)
+
+	orderRequest := OrderRequest{
+		InstrumentName:       instrumentName,
+		Amount:               amount,
+		Contracts:            contracts,
+		Type:                 orderType,
+		Label:                label,
+		Price:                price,
+		TimeInForce:          timeInForce,
+		MaxShow:              maxShow,
+		PostOnly:             postOnly,
+		RejectPostOnly:       rejectPostOnly,
+		ReduceOnly:           reduceOnly,
+		TriggerPrice:         triggerPrice,
+		TriggerOffset:        triggerOffset,
+		Trigger:              trigger,
+		Advanced:             advanced,
+		MMP:                  mmp,
+		ValidUntil:           validUntil,
+		LinkedOrderType:      linkedOrderType,
+		TriggerFillCondition: triggerFillCondition,
+		OTOCOConfig:          otocoConfig,
+	}
+
+	err := s.client.DoPrivate(uri, "POST", orderRequest, &resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
 // ## Create Sell Order
 func (s *OrderService) Sell(
 	instrumentName string,
@@ -575,6 +631,62 @@ func (s *OrderService) Sell(
 	// fmt.Printf("Sell uri: %s \n", uri)
 
 	err := s.client.DoPrivate(uri, "GET", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// ## Create PostSell Order
+func (s *OrderService) PostSell(
+	instrumentName string,
+	amount float64,
+	contracts int64,
+	orderType string,
+	label string,
+	price float64,
+	timeInForce string,
+	maxShow int64,
+	postOnly bool,
+	rejectPostOnly bool,
+	reduceOnly bool,
+	triggerPrice float64,
+	triggerOffset float64,
+	trigger string,
+	advanced string,
+	mmp bool,
+	validUntil int64,
+	linkedOrderType string,
+	triggerFillCondition string,
+	otocoConfig []OTOCOConfig,
+) (*OrderResponse, error) {
+	var resp OrderResponse
+	uri := fmt.Sprintf("%s%s%s", s.client.baseURL, defaultAPIURL, urlPathSell)
+
+	orderRequest := OrderRequest{
+		InstrumentName:       instrumentName,
+		Amount:               amount,
+		Contracts:            contracts,
+		Type:                 orderType,
+		Label:                label,
+		Price:                price,
+		TimeInForce:          timeInForce,
+		MaxShow:              maxShow,
+		PostOnly:             postOnly,
+		RejectPostOnly:       rejectPostOnly,
+		ReduceOnly:           reduceOnly,
+		TriggerPrice:         triggerPrice,
+		TriggerOffset:        triggerOffset,
+		Trigger:              trigger,
+		Advanced:             advanced,
+		MMP:                  mmp,
+		ValidUntil:           validUntil,
+		LinkedOrderType:      linkedOrderType,
+		TriggerFillCondition: triggerFillCondition,
+		OTOCOConfig:          otocoConfig,
+	}
+
+	err := s.client.DoPrivate(uri, "POST", orderRequest, &resp)
 	if err != nil {
 		return nil, err
 	}
