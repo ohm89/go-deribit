@@ -1,3 +1,7 @@
+# 1.3.1
+
+- [BUG] api/trade.go GetUserTradesByInstrumentParams not correct
+
 # 1.3.0
 
 - [NEW] api/trade.go to get trade history data

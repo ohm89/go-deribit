@@ -1511,14 +1511,14 @@ func main() {
 		
 		// Deribit API uses millisecond timestamps
 		// startTimestamp := startDate.UnixMilli()
-		// endTimestamp := endDate.UnixMilli()
+		endTimestamp := endDate.UnixMilli()
 
 		// Set up the parameters
 		params := api.GetUserTradesByInstrumentParams{
 			InstrumentName: "BTC_USDC",
-			StartTimestamp: 0,
-			EndTimestamp:   9999999999999,
-			IncludeOld:     true,  // Required to get trades older than 7 days
+			StartTimestamp: 0, //0,
+			EndTimestamp:   endTimestamp, //9999999999999,
+			Historical:     true,  // Required to get trades older than 7 days
 			Sorting:        "asc", // Get oldest trades first (optional)
 			Count:          1000,   // Number of trades to fetch per request
 		}
