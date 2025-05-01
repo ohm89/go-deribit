@@ -40,13 +40,15 @@ func main() {
 	fmt.Printf("\n\n********* Start Program %s *********** \n\n", config.NAME)
 
 	isUsePrivateWebSocket := false
-	isUseOrderAPI := true
+	isUseOrderAPI := false
 	isUseMarketAPI := false
+
+	isUseTradingAPI := true
 
 	isUsePublicWebSocket := false
 	isUsePositionAPI := false
 
-	// ## ------ Websocket Testing and usage --------------
+	// ## ------ API Testing and usage --------------
 	if isUsePositionAPI {
 		// ## Create New http Client
 		apiClient := api.New(
@@ -1491,5 +1493,121 @@ func main() {
 		// ## Gracefully shut down the client
 		client.Close()
 		log.Println("Shutting down...")
+	}
+
+	// ## ------ API Testing and usage market.go --------------
+	if isUseTradingAPI {
+		// ## Create New http Client
+		apiClient := api.New(
+			"https://"+config.API_URL,
+			config.CLIENT_ID,
+			config.CLIENT_SECRET,
+		)
+
+		// ## [1] GetUserTradeHistoryByInstrument 
+		// Convert dates to Unix timestamps (milliseconds)
+		startDate := time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)
+		endDate := time.Date(2025, time.April, 30, 0, 0, 0, 0, time.UTC)
+		
+		// Deribit API uses millisecond timestamps
+		// startTimestamp := startDate.UnixMilli()
+		// endTimestamp := endDate.UnixMilli()
+
+		// Set up the parameters
+		params := api.GetUserTradesByInstrumentParams{
+			InstrumentName: "BTC_USDC",
+			StartTimestamp: 0,
+			EndTimestamp:   9999999999999,
+			IncludeOld:     true,  // Required to get trades older than 7 days
+			Sorting:        "asc", // Get oldest trades first (optional)
+			Count:          1000,   // Number of trades to fetch per request
+		}
+
+		// Make the API call
+		// Store all trades
+		var allTrades []api.Trade
+	
+		// Pagination loop
+		hasMore := true
+		for hasMore {
+			// Make the API call
+			tradesResponse, err := apiClient.Trade.GetUserTradesByInstrument(params)
+			if err != nil {
+				log.Fatal("Error fetching trades:", err)
+			}
+
+			// ## [DEBUG]
+			// Display progress
+			// fmt.Printf("tradesResponse: %+v\n", tradesResponse)
+			
+			// Get the trades from this batch
+			trades := tradesResponse.Result.Trades
+			
+			// Add these trades to our collection
+			allTrades = append(allTrades, trades...)
+			
+			
+			// Check if there are more trades to fetch
+			hasMore = tradesResponse.Result.HasMore
+			
+			// Display progress
+			fmt.Printf("Fetched batch of %d trades. Total so far: %d, HasMore: %v\n", 
+				len(trades), len(allTrades), hasMore)
+			
+			// If there are more, prepare for next request
+			if hasMore && len(trades) > 0 {
+					// Method 1: Use the last trade's sequence number for pagination
+					// This is the preferred method if trades have sequence numbers
+					lastTrade := trades[len(trades)-1]
+					params.StartSeq = lastTrade.TradeSeq + 1
+					
+					// Alternative Method 2: Use timestamp-based pagination
+					// In case sequence-based pagination doesn't work well
+					// We add 1ms to the last timestamp to avoid getting the same trade again
+					// params.StartTimestamp = lastTrade.Timestamp + 1
+					
+					// Add a small delay to avoid hitting rate limits
+					time.Sleep(200 * time.Millisecond)
+			}
+		}
+
+		// Process all the collected trades
+		fmt.Printf("\nCompleted! Total trades fetched: %d\n", len(allTrades))
+		
+		// Display trade information (only showing first few trades for brevity)
+		maxDisplay := 10
+		if len(allTrades) < maxDisplay {
+			maxDisplay = len(allTrades)
+		}
+		
+		fmt.Printf("\nShowing first %d trades:\n", maxDisplay)
+		for i := 0; i < maxDisplay; i++ {
+			trade := allTrades[i]
+			tradeTime := time.Unix(0, trade.Timestamp*int64(time.Millisecond))
+			
+			fmt.Printf("Trade #%d: ID=%s, Time=%s, Price=%f, Amount=%f, Direction=%s\n",
+				i+1, trade.TradeID, tradeTime.Format(time.RFC3339),
+				trade.Price, trade.Amount, trade.Direction)
+		}
+
+		// Get some statistics
+		if len(allTrades) > 0 {
+			var totalVolume, totalFees float64
+			
+			for _, trade := range allTrades {
+				totalVolume += trade.Amount
+				totalFees += trade.Fee
+			}
+			
+			fmt.Printf("\nSummary Statistics:\n")
+			fmt.Printf("Date Range: %s to %s\n", 
+				startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))
+			fmt.Printf("Total Trades: %d\n", len(allTrades))
+			fmt.Printf("Total Volume: %.8f\n", totalVolume)
+			fmt.Printf("Total Fees: %.8f\n", totalFees)
+		}
+
+		//## -----------------------------
+
 	}
 }

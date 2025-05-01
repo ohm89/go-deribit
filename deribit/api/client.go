@@ -55,6 +55,7 @@ type Client struct {
 	Orders *OrderService
 	// Fills    *FillsService
 	Positions *PositionService
+	Trade *TradeService
 }
 
 func New(baseUrl string, clientID string, clientSecret string) *Client {
@@ -77,6 +78,7 @@ func New(baseUrl string, clientID string, clientSecret string) *Client {
 	c.Orders = (*OrderService)(&c.common)
 	c.Positions = (*PositionService)(&c.common)
 	// c.Fills = (*FillsService)(&c.common)
+	c.Trade = (*TradeService)(&c.common)
 
 	return c
 }
@@ -180,10 +182,136 @@ func (c *Client) do(uri string, method string, in, out interface{}, isPrivate bo
 	return nil
 }
 
+
+
 func (c *Client) DoPublic(uri string, method string, in, out interface{}) error {
 	return c.do(uri, method, in, out, false)
 }
 
 func (c *Client) DoPrivate(uri string, method string, in, out interface{}) error {
 	return c.do(uri, method, in, out, true)
+}
+
+// ## ---------------- [RPC] --------------------
+// RPCRequest represents the JSON-RPC 2.0 request structure
+type RPCRequest struct {
+	Method  string      `json:"method"`
+	Params  interface{} `json:"params"`
+	Jsonrpc string      `json:"jsonrpc"`
+	Id      uint64      `json:"id"`
+}
+
+// RPCRequestOptions contains options for the RPC request
+type RPCRequestOptions struct {
+	Method string
+	Params interface{}
+	ID     uint64
+}
+
+
+// ## Basic RPC http driver to request
+func (c *Client) doPostRPC(uri string, options RPCRequestOptions, out interface{}, isPrivate bool) error {
+	req, resp := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
+	defer func() {
+		fasthttp.ReleaseRequest(req)
+		fasthttp.ReleaseResponse(resp)
+	}()
+
+	req.SetRequestURI(uri)
+	req.Header.SetMethod("POST") // JSON-RPC typically uses POST
+	req.Header.SetContentType("application/json")
+
+	// Create JSON-RPC 2.0 request
+	jsonRPCRequest := RPCRequest{
+		Method:  options.Method,
+		Params:  options.Params,
+		Jsonrpc: "2.0",
+		Id:      options.ID,
+	}
+
+	// Marshal the request to JSON
+	jsonData, err := json.Marshal(jsonRPCRequest)
+	if err != nil {
+		return err
+	}
+	req.SetBody(jsonData)
+
+	// Set authorization if it's a private endpoint
+	if isPrivate {
+		if c.accessToken == "" {
+			if _, err := Authenticate(c); err != nil {
+				return err
+			}
+		}
+
+		req.Header.Set("Authorization", "Bearer "+c.accessToken)
+	}
+
+	var numRetries int
+	var data Response
+	for {
+		if err := c.client.Do(req, resp); err != nil {
+			return err
+		}
+
+		// Check the response status code
+		if resp.StatusCode() == fasthttp.StatusOK {
+			// Check if the response body is empty
+			if resp.Body() == nil || len(resp.Body()) == 0 {
+				// Return an error, as the response should not be empty
+				return fmt.Errorf("unexpected empty response body with status code %d", resp.StatusCode())
+			}
+
+			if err := json.Unmarshal(resp.Body(), &data); err != nil {
+				return fmt.Errorf("unmarshal: [%v] body: %v, error: %v", resp.StatusCode(), string(resp.Body()), err)
+			}
+
+			if data.Error != nil {
+				// Check if the error code is 13009 (unauthorized)
+				if data.Error.Code == 13009 && numRetries < maxRetries {
+					// Retry the request after authenticating
+					if _, err := Authenticate(c); err != nil {
+						return err
+					}
+					numRetries++
+					continue
+				}
+				return fmt.Errorf("request failed: code: %d, message: %s", data.Error.Code, data.Error.Message)
+			}
+
+			break
+		} else {
+			// ## [DEBUG]
+			fmt.Printf("-- doRPC Request Error !! -- \n")
+			fmt.Printf("Error Request URL: %#v \n\n", string(req.RequestURI()))
+			fmt.Printf("Error Request Body: %#v \n\n", string(req.Body()))
+			fmt.Printf("Error Response body: %#v \n\n", string(resp.Body()))
+
+			// Handle the error response
+			return fmt.Errorf(
+				"request URI: %s \n request Body: %s \n\n Request failed with status code: %d \n Response body: %s",
+				string(req.RequestURI()),
+				string(req.Body()),
+				resp.StatusCode(),
+				string(resp.Body()),
+			)
+		}
+	}
+
+	if out != nil {
+		// Assign the data.Result to the out parameter
+		if err := json.Unmarshal(resp.Body(), out); err != nil {
+			return fmt.Errorf("unmarshal out: [%v] body: %v, error: %v", resp.StatusCode(), string(resp.Body()), err)
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) DoPrivateRPC(uri string, method string, params interface{}, out interface{}) error {
+	options := RPCRequestOptions{
+		Method: method,
+		Params: params,
+	}
+	return c.doPostRPC(uri, options, out, true)
 }

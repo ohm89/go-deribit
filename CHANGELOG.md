@@ -1,3 +1,7 @@
+# 1.3.0
+
+- [NEW] api/trade.go to get trade history data
+
 # 1.2.5 
 
 - [BUG] api/order.go fix PostBuy and PostSell to add correct body request
