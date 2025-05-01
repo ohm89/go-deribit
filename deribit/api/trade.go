@@ -54,7 +54,7 @@ type GetUserTradesByInstrumentParams struct {
 	InstrumentName    string `json:"instrument_name"`
 	StartSeq          int64  `json:"start_seq,omitempty"`
 	EndSeq            int64  `json:"end_seq,omitempty"`
-	Count             int    `json:"count,omitempty"`
+	Count             int64    `json:"count,omitempty"`
 	Historical        bool   `json:"historical,omitempty"`
 	Sorting           string `json:"sorting,omitempty"`
 	StartTimestamp    int64  `json:"start_timestamp,omitempty"`

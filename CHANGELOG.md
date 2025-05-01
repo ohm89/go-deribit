@@ -1,3 +1,8 @@
+# 1.3.2
+
+- [BUG] api/trade.go GetUserTradesByInstrumentParams type to int64
+- [CHANGE] Main.go to get all by pagination of trade seq
+
 # 1.3.1
 
 - [BUG] api/trade.go GetUserTradesByInstrumentParams not correct

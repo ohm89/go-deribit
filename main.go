@@ -1511,16 +1511,19 @@ func main() {
 		
 		// Deribit API uses millisecond timestamps
 		// startTimestamp := startDate.UnixMilli()
-		endTimestamp := endDate.UnixMilli()
+		// endTimestamp := endDate.UnixMilli()
+
+		var count int64 = 100
+		var sorting string = "desc"
 
 		// Set up the parameters
 		params := api.GetUserTradesByInstrumentParams{
 			InstrumentName: "BTC_USDC",
-			StartTimestamp: 0, //0,
-			EndTimestamp:   endTimestamp, //9999999999999,
+			// StartTimestamp: 0, //0,
+			// EndTimestamp:   endTimestamp, //9999999999999,
 			Historical:     true,  // Required to get trades older than 7 days
-			Sorting:        "asc", // Get oldest trades first (optional)
-			Count:          1000,   // Number of trades to fetch per request
+			Sorting:        sorting, // Get oldest trades first (optional)
+			Count:          count,   // Number of trades to fetch per request
 		}
 
 		// Make the API call
@@ -1530,6 +1533,10 @@ func main() {
 		// Pagination loop
 		hasMore := true
 		for hasMore {
+
+			// ## [DEBUG]
+			fmt.Printf("params Data: %+v\n", params)
+
 			// Make the API call
 			tradesResponse, err := apiClient.Trade.GetUserTradesByInstrument(params)
 			if err != nil {
@@ -1558,8 +1565,15 @@ func main() {
 			if hasMore && len(trades) > 0 {
 					// Method 1: Use the last trade's sequence number for pagination
 					// This is the preferred method if trades have sequence numbers
-					lastTrade := trades[len(trades)-1]
-					params.StartSeq = lastTrade.TradeSeq + 1
+					if sorting == "asc" {
+						lastTrade := trades[0]
+						// params.StartSeq = lastTrade.TradeSeq - 1 - count
+						params.EndSeq = lastTrade.TradeSeq - 1
+					} else if sorting == "desc" {
+						lastTrade := trades[len(trades) - 1]
+						// params.StartSeq = lastTrade.TradeSeq - 1 - count
+						params.EndSeq = lastTrade.TradeSeq - 1
+					}
 					
 					// Alternative Method 2: Use timestamp-based pagination
 					// In case sequence-based pagination doesn't work well
@@ -1582,12 +1596,12 @@ func main() {
 		
 		fmt.Printf("\nShowing first %d trades:\n", maxDisplay)
 		for i := 0; i < maxDisplay; i++ {
-			trade := allTrades[i]
+			trade := allTrades[(len(allTrades) - 1) - i]
 			tradeTime := time.Unix(0, trade.Timestamp*int64(time.Millisecond))
 			
-			fmt.Printf("Trade #%d: ID=%s, Time=%s, Price=%f, Amount=%f, Direction=%s\n",
+			fmt.Printf("Trade #%d: ID=%s, Time=%s, Price=%f, Amount=%f, Direction=%s, TradeSeq=%d, TradeID=%s\n, ",
 				i+1, trade.TradeID, tradeTime.Format(time.RFC3339),
-				trade.Price, trade.Amount, trade.Direction)
+				trade.Price, trade.Amount, trade.Direction, trade.TradeSeq, trade.TradeID)
 		}
 
 		// Get some statistics
