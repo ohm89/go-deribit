@@ -11,6 +11,7 @@ type AccountService struct {
 const (
 	urlPathAccountSummaries = "/private/get_account_summaries"
 	urlPathAccountSummary   = "/private/get_account_summary"
+	urlPathSetLeverage      = "/private/set_leverage"
 )
 
 type AccountSummary struct {
@@ -117,6 +118,39 @@ func (s *AccountService) GetAccountSummary(currency string, extended bool) (*Acc
 		urlPathAccountSummary,
 		currency,
 		extended,
+	)
+	err := s.client.DoPrivate(uri, "GET", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.Error != nil {
+		return nil, fmt.Errorf("API request failed: code=%d, message=%s", resp.Error.Code, resp.Error.Message)
+	}
+
+	return &resp, nil
+}
+
+// SetLeverageResponse represents the response from set_leverage API
+type SetLeverageResponse struct {
+	ID      uint64 `json:"id"`
+	JSONRPC string `json:"jsonrpc"`
+	Result  int    `json:"result"` // Returns the leverage that was set
+	Error   *ResponseError `json:"error,omitempty"`
+}
+
+// SetLeverage sets the leverage for a specific instrument
+// instrumentName: The instrument name (e.g., "BTC-PERPETUAL")
+// leverage: The leverage to set (1-100)
+func (s *AccountService) SetLeverage(instrumentName string, leverage int) (*SetLeverageResponse, error) {
+	var resp SetLeverageResponse
+	uri := fmt.Sprintf(
+		"%s%s%s?instrument_name=%s&leverage=%d",
+		s.client.baseURL,
+		defaultAPIURL,
+		urlPathSetLeverage,
+		instrumentName,
+		leverage,
 	)
 	err := s.client.DoPrivate(uri, "GET", nil, &resp)
 	if err != nil {
