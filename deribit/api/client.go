@@ -151,11 +151,21 @@ func (c *Client) do(uri string, method string, in, out interface{}, isPrivate bo
 
 			break
 		} else {
-			// ## [DEBUG]
-			fmt.Printf("-- do Request Error !! -- \n")
-			fmt.Printf("Error Request URL: %#v \n\n", string(req.RequestURI()))
-			fmt.Printf("Error Request Body: %#v \n\n", string(req.Body()))
-			fmt.Printf("Error Response body: %#v \n\n", string(resp.Body()))
+			// Deribit returns 13009 (unauthorized) with HTTP 400, not 200.
+			// Parse response body for error code before returning generic error.
+			if resp.Body() != nil && len(resp.Body()) > 0 {
+				var errData Response
+				if parseErr := json.Unmarshal(resp.Body(), &errData); parseErr == nil {
+					if errData.Error != nil && errData.Error.Code == 13009 && numRetries < maxRetries {
+						// Token expired — re-authenticate and retry
+						if _, authErr := Authenticate(c); authErr != nil {
+							return authErr
+						}
+						numRetries++
+						continue
+					}
+				}
+			}
 
 			// Handle the error response
 			return fmt.Errorf(
@@ -281,11 +291,21 @@ func (c *Client) doPostRPC(uri string, options RPCRequestOptions, out interface{
 
 			break
 		} else {
-			// ## [DEBUG]
-			fmt.Printf("-- doRPC Request Error !! -- \n")
-			fmt.Printf("Error Request URL: %#v \n\n", string(req.RequestURI()))
-			fmt.Printf("Error Request Body: %#v \n\n", string(req.Body()))
-			fmt.Printf("Error Response body: %#v \n\n", string(resp.Body()))
+			// Deribit returns 13009 (unauthorized) with HTTP 400, not 200.
+			// Parse response body for error code before returning generic error.
+			if resp.Body() != nil && len(resp.Body()) > 0 {
+				var errData Response
+				if parseErr := json.Unmarshal(resp.Body(), &errData); parseErr == nil {
+					if errData.Error != nil && errData.Error.Code == 13009 && numRetries < maxRetries {
+						// Token expired — re-authenticate and retry
+						if _, authErr := Authenticate(c); authErr != nil {
+							return authErr
+						}
+						numRetries++
+						continue
+					}
+				}
+			}
 
 			// Handle the error response
 			return fmt.Errorf(
