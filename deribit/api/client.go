@@ -143,6 +143,8 @@ func (c *Client) do(uri string, method string, in, out interface{}, isPrivate bo
 					if _, err := Authenticate(c); err != nil {
 						return err
 					}
+					// Update request header with new token
+					req.Header.Set("Authorization", "Bearer "+c.accessToken)
 					numRetries++
 					continue
 				}
@@ -161,6 +163,8 @@ func (c *Client) do(uri string, method string, in, out interface{}, isPrivate bo
 						if _, authErr := Authenticate(c); authErr != nil {
 							return authErr
 						}
+						// Update request header with new token
+						req.Header.Set("Authorization", "Bearer "+c.accessToken)
 						numRetries++
 						continue
 					}
@@ -283,6 +287,8 @@ func (c *Client) doPostRPC(uri string, options RPCRequestOptions, out interface{
 					if _, err := Authenticate(c); err != nil {
 						return err
 					}
+					// Update request header with new token
+					req.Header.Set("Authorization", "Bearer "+c.accessToken)
 					numRetries++
 					continue
 				}
@@ -301,6 +307,8 @@ func (c *Client) doPostRPC(uri string, options RPCRequestOptions, out interface{
 						if _, authErr := Authenticate(c); authErr != nil {
 							return authErr
 						}
+						// Update request header with new token
+						req.Header.Set("Authorization", "Bearer "+c.accessToken)
 						numRetries++
 						continue
 					}
