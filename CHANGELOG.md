@@ -1,3 +1,8 @@
+# 2.0.0 - 2026-04-16
+
+- [MAJOR] Platform-wide 2.x release aligned with TBS self-hosted bot distribution rollout
+- No API-breaking changes in this library; major bump is organisational to stay in sync with consumers (go-deribit-fix-cash-grid 2.0.0, go-deribit-grid 2.0.0, go-deribit-rebalance 2.0.0)
+
 # 1.3.2
 
 - [BUG] api/trade.go GetUserTradesByInstrumentParams type to int64
