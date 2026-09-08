@@ -38,7 +38,12 @@ type Position struct {
 	InstrumentName            string  `json:"instrument_name"`
 	InterestValue             float64 `json:"interest_value"`
 	Kind                      string  `json:"kind"`
-	Leverage                  int     `json:"leverage"`
+	// 🔴 float64, not int. Deribit sends `leverage` as a JSON number that can
+	// carry a fraction (observed live: 50.0). With `int`, encoding/json
+	// rejects the ENTIRE response — "cannot unmarshal number 50.0 into Go
+	// struct field Position.result.leverage of type int" — so GetPosition
+	// fails and every caller fails with it.
+	Leverage                  float64 `json:"leverage"`
 	MaintenanceMargin         float64 `json:"maintenance_margin"`
 	MarkPrice                 float64 `json:"mark_price"`
 	OpenOrdersMargin          float64 `json:"open_orders_margin"`
